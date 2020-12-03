@@ -15,5 +15,7 @@ namespace FinancialPortalProject.Services
         public string GetFileIcon(string file);
 
         public string FormatFileSize(long bytes);
+
+        public Task<byte[]> AssignDefaultAvatarAsync(string avatar);
     }
 }

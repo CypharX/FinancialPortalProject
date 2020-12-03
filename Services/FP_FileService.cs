@@ -46,5 +46,11 @@ namespace FinancialPortalProject.Services
             }
             return string.Format("{0:n1}{1}", number, suffixes[counter]);
         }
+
+        public async Task<byte[]> AssignDefaultAvatarAsync(string avatar)
+        {
+            var avatarPath = Path.Combine(Directory.GetCurrentDirectory(), @"wwwroot/img", avatar);
+            return await File.ReadAllBytesAsync(avatarPath);
+        }
     }
 }

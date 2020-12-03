@@ -41,6 +41,7 @@ namespace FinancialPortalProject
             services.AddRazorPages();
 
             services.Configure<MailSettings>(Configuration.GetSection("MailSettings"));
+            services.Configure<AdminSettings>(Configuration.GetSection("AdminSettings"));
 
             services.AddScoped<IFP_FileService, FP_FileService>();
             services.AddScoped<IEmailSender, EmailService>();

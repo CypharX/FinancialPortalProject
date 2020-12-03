@@ -17,6 +17,8 @@ using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Http;
 using FinancialPortalProject.Services;
+using FinancialPortalProject.Extensions;
+using Microsoft.Extensions.Configuration;
 
 namespace FinancialPortalProject.Areas.Identity.Pages.Account
 {
@@ -28,19 +30,22 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly IFP_FileService _fileService;
+        private readonly IConfiguration _configuration;
 
         public RegisterModel(
             UserManager<FpUser> userManager,
             SignInManager<FpUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            IFP_FileService fileService)
+            IFP_FileService fileService,
+            IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
             _fileService = fileService;
+            _configuration = configuration;
         }
 
         [BindProperty]
@@ -80,7 +85,9 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
 
 
             [NotMapped]
-            [DataType(DataType.Upload)]            
+            [DataType(DataType.Upload)]
+            [MaxFileSize(2 * 1024 * 1024)]
+            [AllowedExtensions(new string[] { ".jpg", ".png", ".jpeg" })]
             public IFormFile Avatar { get; set; }
         }
 
@@ -108,6 +115,12 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
                 {
                     user.ImageName = Input.Avatar.FileName;
                     user.ImageData = await _fileService.ConvertFileToByteArrayAsync(Input.Avatar);
+                }
+                else
+                {
+                    var image = _configuration.GetSection("AdminSettings")["ImageName"];
+                    user.ImageData = await _fileService.AssignDefaultAvatarAsync(image);
+                    user.ImageName = image;
                 }
                 var result = await _userManager.CreateAsync(user, Input.Password);
                 if (result.Succeeded)

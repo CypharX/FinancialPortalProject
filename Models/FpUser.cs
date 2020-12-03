@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using FinancialPortalProject.Extensions;
+using FinancialPortalProject.Models.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
@@ -31,12 +33,18 @@ namespace FinancialPortalProject.Models
 
 
         [NotMapped]
-        [DataType(DataType.Upload)]       
+        [DataType(DataType.Upload)]
+        [MaxFileSize(2 * 1024 * 1024)]
+        [AllowedExtensions(new string[] { ".jpg", ".png", ".jpeg" })]
         public IFormFile Avatar { get; set; }
 
         [NotMapped]
         public string Extension { get; set; }
 
-        
+        public int? HouseHoldId { get; set; }
+        public HouseHold HouseHold { get; set; }
+
+        public virtual ICollection<BankAccount> BankAccounts { get; set; } = new HashSet<BankAccount>();
+        public virtual ICollection<Transaction> Transactions { get; set; } = new HashSet<Transaction>();
     }
 }

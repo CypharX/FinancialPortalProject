@@ -1,27 +1,76 @@
 ﻿@page
 @model IndexModel
+@inject FinancialPortalProject.Services.IFP_FileService FileService
+@inject UserManager<FpUser> UserManager
 @{
     ViewData["Title"] = "Profile";
     ViewData["ActivePage"] = ManageNavPages.Index;
+    var user = UserManager.GetUserAsync(User).Result;
 }
 
 <h4>@ViewData["Title"]</h4>
 <partial name="_StatusMessage" model="Model.StatusMessage" />
 <div class="row">
     <div class="col-md-6">
-        <form id="profile-form" method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <form id="profile-form" method="post" enctype="multipart/form-data">
+            <h4>Update account info.</h4>
+            <hr />
+            <div asp-validation-summary="All" class="text-danger"></div>
             <div class="form-group">
-                <label asp-for="Username"></label>
-                <input asp-for="Username" class="form-control" disabled />
+                <label asp-for="Input.FirstName"></label>
+                <input asp-for="Input.FirstName" class="form-control" />
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Input.PhoneNumber"></label>
-                <input asp-for="Input.PhoneNumber" class="form-control" />
-                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                <label asp-for="Input.LastName"></label>
+                <input asp-for="Input.LastName" class="form-control" />
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
             </div>
-            <button id="update-profile-button" type="submit" class="btn btn-primary">Save</button>
+            <div class="form-group">
+                <label asp-for="Input.Email"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Input.OldPassword"></label>
+                <input asp-for="Input.OldPassword" class="form-control" />
+                <span asp-validation-for="Input.OldPassword" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Input.Password"></label>
+                <input asp-for="Input.Password" class="form-control" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Input.ConfirmPassword"></label>
+                <input asp-for="Input.ConfirmPassword" class="form-control" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Input.Avatar"></label>
+                <input asp-for="Input.Avatar" type="file" class="form-control" />
+                <span asp-validation-for="Input.Avatar" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Update</button>
         </form>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Your Avatar</div>
+            </div>
+            <div class="card-body">
+                @if (user.ImageData == null)
+                {
+                    <img class="img-fluid" src="~/Img/silhouette.jpeg" />
+                }
+                else
+                {
+                    <img class="img-fluid" src="@FileService.ConvertByteArrayToFile(user.ImageData, user.Extension)" />
+                }
+            </div>
+        </div>
+
     </div>
 </div>
 

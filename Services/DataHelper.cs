@@ -1,4 +1,6 @@
 ﻿using FinancialPortalProject.Data;
+using FinancialPortalProject.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -43,6 +45,14 @@ namespace FinancialPortalProject.Services
             {
                 using var svcScope = host.Services.CreateScope();
                 var svcProvider = svcScope.ServiceProvider;
+
+                var services = svcScope.ServiceProvider;
+                var context = services.GetRequiredService<ApplicationDbContext>();
+                var userManager = services.GetRequiredService<UserManager<FpUser>>();
+                var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+
+                await ContextSeed.RunSeedMethodsAsync(roleManager, userManager, context);
 
                 var dbContextSvc = svcProvider.GetRequiredService<ApplicationDbContext>();
                 await dbContextSvc.Database.MigrateAsync();

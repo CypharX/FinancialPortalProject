@@ -19,6 +19,206 @@ namespace FinancialPortalProject.Migrations
                 .HasAnnotation("ProductVersion", "3.1.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.BankAccount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<decimal>("CurrentBalance")
+                        .HasColumnType("decimal(7, 2)");
+
+                    b.Property<string>("FpUserId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("HouseHoldId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(50);
+
+                    b.Property<decimal>("StartingBalance")
+                        .HasColumnType("decimal(7, 2)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(50);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FpUserId");
+
+                    b.HasIndex("HouseHoldId");
+
+                    b.ToTable("BankAccounts");
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("character varying(500)")
+                        .HasMaxLength(500);
+
+                    b.Property<int>("HouseHoldId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(100);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseHoldId");
+
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.CategoryItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<decimal>("ActualAmount")
+                        .HasColumnType("decimal(7, 2)");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("character varying(200)")
+                        .HasMaxLength(200);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(50);
+
+                    b.Property<decimal>("TargetAmount")
+                        .HasColumnType("decimal(7, 2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("CategoryItems");
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.HouseHold", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<DateTime?>("Established")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Greeting")
+                        .HasColumnType("character varying(150)")
+                        .HasMaxLength(150);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(50);
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HouseHolds");
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("character varying(1000)")
+                        .HasMaxLength(1000);
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("HouseHoldId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("character varying(150)")
+                        .HasMaxLength(150);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseHoldId");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.Transaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(7, 2)");
+
+                    b.Property<int>("BankAccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CategoryItemId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("FpUserId")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Memo")
+                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(50);
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(50);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("CategoryItemId");
+
+                    b.HasIndex("FpUserId");
+
+                    b.ToTable("Transactions");
+                });
+
             modelBuilder.Entity("FinancialPortalProject.Models.FpUser", b =>
                 {
                     b.Property<string>("Id")
@@ -42,6 +242,9 @@ namespace FinancialPortalProject.Migrations
                         .IsRequired()
                         .HasColumnType("character varying(50)")
                         .HasMaxLength(50);
+
+                    b.Property<int?>("HouseHoldId")
+                        .HasColumnType("integer");
 
                     b.Property<byte[]>("ImageData")
                         .HasColumnType("bytea");
@@ -89,6 +292,8 @@ namespace FinancialPortalProject.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("HouseHoldId");
+
                     b.HasIndex("NormalizedEmail")
                         .HasName("EmailIndex");
 
@@ -97,6 +302,50 @@ namespace FinancialPortalProject.Migrations
                         .HasName("UserNameIndex");
 
                     b.ToTable("AspNetUsers");
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Invitation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
+
+                    b.Property<bool>("Accepted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("character varying(1000)")
+                        .HasMaxLength(1000);
+
+                    b.Property<Guid>("Code")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("EmailTo")
+                        .IsRequired()
+                        .HasColumnType("character varying(50)")
+                        .HasMaxLength(50);
+
+                    b.Property<DateTime>("Expires")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("HouseHoldId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("character varying(150)")
+                        .HasMaxLength(150);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseHoldId");
+
+                    b.ToTable("Invitations");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -227,6 +476,79 @@ namespace FinancialPortalProject.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens");
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.BankAccount", b =>
+                {
+                    b.HasOne("FinancialPortalProject.Models.FpUser", "Owner")
+                        .WithMany("BankAccounts")
+                        .HasForeignKey("FpUserId");
+
+                    b.HasOne("FinancialPortalProject.Models.Core.HouseHold", "HouseHold")
+                        .WithMany("BankAccounts")
+                        .HasForeignKey("HouseHoldId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.Category", b =>
+                {
+                    b.HasOne("FinancialPortalProject.Models.Core.HouseHold", "HouseHold")
+                        .WithMany("Categories")
+                        .HasForeignKey("HouseHoldId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.CategoryItem", b =>
+                {
+                    b.HasOne("FinancialPortalProject.Models.Core.Category", "Category")
+                        .WithMany("CategoryItems")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.Notification", b =>
+                {
+                    b.HasOne("FinancialPortalProject.Models.Core.HouseHold", "HouseHold")
+                        .WithMany("Notifications")
+                        .HasForeignKey("HouseHoldId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Core.Transaction", b =>
+                {
+                    b.HasOne("FinancialPortalProject.Models.Core.BankAccount", "BankAccount")
+                        .WithMany("Transactions")
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FinancialPortalProject.Models.Core.CategoryItem", "CategoryItem")
+                        .WithMany("Transactions")
+                        .HasForeignKey("CategoryItemId");
+
+                    b.HasOne("FinancialPortalProject.Models.FpUser", "User")
+                        .WithMany("Transactions")
+                        .HasForeignKey("FpUserId");
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.FpUser", b =>
+                {
+                    b.HasOne("FinancialPortalProject.Models.Core.HouseHold", "HouseHold")
+                        .WithMany("Members")
+                        .HasForeignKey("HouseHoldId");
+                });
+
+            modelBuilder.Entity("FinancialPortalProject.Models.Invitation", b =>
+                {
+                    b.HasOne("FinancialPortalProject.Models.Core.HouseHold", "HouseHold")
+                        .WithMany("Invitations")
+                        .HasForeignKey("HouseHoldId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

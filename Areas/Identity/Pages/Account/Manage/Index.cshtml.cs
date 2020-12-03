@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FinancialPortalProject.Extensions;
 using FinancialPortalProject.Models;
+using FinancialPortalProject.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -14,13 +19,16 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account.Manage
     {
         private readonly UserManager<FpUser> _userManager;
         private readonly SignInManager<FpUser> _signInManager;
+        private readonly IFP_FileService _fileService;
 
         public IndexModel(
             UserManager<FpUser> userManager,
-            SignInManager<FpUser> signInManager)
+            SignInManager<FpUser> signInManager,
+            IFP_FileService fileService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _fileService = fileService;
         }
 
         public string Username { get; set; }
@@ -32,10 +40,41 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account.Manage
         public InputModel Input { get; set; }
 
         public class InputModel
-        {
-            [Phone]
-            [Display(Name = "Phone number")]
-            public string PhoneNumber { get; set; }
+        {    
+            [StringLength(50, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+
+            [StringLength(50, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 2)]
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
+
+            [EmailAddress]
+            [Display(Name = "Email")]
+            public string Email { get; set; }
+
+            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [DataType(DataType.Password)]
+            [Display(Name = "New Password")]
+            public string Password { get; set; }
+
+            [DataType(DataType.Password)]
+            [Display(Name = "Confirm New Password")]
+            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+            public string ConfirmPassword { get; set; }
+
+            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [DataType(DataType.Password)]
+            [Display(Name = "Current Password")]
+            public string OldPassword { get; set; }
+
+            [NotMapped]
+            [DataType(DataType.Upload)]
+            [MaxFileSize(2 * 1024 * 1024)]
+            [AllowedExtensions(new string[] { ".jpg", ".png", ".jpeg" })]
+            public IFormFile Avatar { get; set; }
+            public string ImageName { get; set; }
+            public byte[] ImageData { get; set; }
         }
 
         private async Task LoadAsync(FpUser user)
@@ -47,7 +86,11 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account.Manage
 
             Input = new InputModel
             {
-                PhoneNumber = phoneNumber
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                ImageData = user.ImageData,
+                ImageName = user.ImageName
             };
         }
 
@@ -58,7 +101,7 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account.Manage
             {
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
-
+            user.Extension = Path.GetExtension(user.ImageName); 
             await LoadAsync(user);
             return Page();
         }
@@ -77,16 +120,66 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-            if (Input.PhoneNumber != phoneNumber)
+                       
+            if(Input.FirstName != user.FirstName)
             {
-                var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-                if (!setPhoneResult.Succeeded)
+                user.FirstName = Input.FirstName;
+                var update = await _userManager.UpdateAsync(user);
+                if (!update.Succeeded)
                 {
-                    StatusMessage = "Unexpected error when trying to set phone number.";
+                    StatusMessage = "Error when trying update first name.";
                     return RedirectToPage();
                 }
             }
+
+            if (Input.LastName != user.LastName)
+            {
+                user.LastName = Input.LastName;
+                var update = await _userManager.UpdateAsync(user);
+                if (!update.Succeeded)
+                {
+                    StatusMessage = "Error when trying update last name.";
+                    return RedirectToPage();
+                }
+            }
+
+            if (Input.Email != user.Email)
+            {
+                user.Email = Input.Email;
+                user.UserName = Input.Email;
+                var update = await _userManager.UpdateAsync(user);
+                if (!update.Succeeded)
+                {
+                    StatusMessage = "Error when trying update email.";
+                    return RedirectToPage();
+                }
+            }
+
+            if (Input.Avatar != null)
+            {
+                user.ImageData = await _fileService.ConvertFileToByteArrayAsync(Input.Avatar);
+                user.ImageName = Input.Avatar.FileName;
+                var update = await _userManager.UpdateAsync(user);
+                if (!update.Succeeded)
+                {
+                    StatusMessage = "Error when trying update avatar.";
+                    return RedirectToPage();
+                }
+            }
+
+            if (Input.Password != null && Input.OldPassword != null)
+            {
+                var changePasswordResult = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.Password);
+                if (!changePasswordResult.Succeeded)
+                {
+                    foreach (var error in changePasswordResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    return Page();
+                }
+            }
+
 
             await _signInManager.RefreshSignInAsync(user);
             StatusMessage = "Your profile has been updated";
