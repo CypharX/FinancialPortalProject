@@ -7,16 +7,20 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FinancialPortalProject.Data;
 using FinancialPortalProject.Models.Core;
+using Microsoft.AspNetCore.Identity;
+using FinancialPortalProject.Models;
 
 namespace FinancialPortalProject.Controllers
 {
     public class BankAccountsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<FpUser> _userManager;
 
-        public BankAccountsController(ApplicationDbContext context)
+        public BankAccountsController(ApplicationDbContext context, UserManager<FpUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: BankAccounts
@@ -50,7 +54,7 @@ namespace FinancialPortalProject.Controllers
         public IActionResult Create()
         {
             ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name");
-            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "Id");
+            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "FullName");
             return View();
         }
 
@@ -59,16 +63,18 @@ namespace FinancialPortalProject.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,HouseHoldId,FpUserId,Name,Type,StartingBalance,CurrentBalance")] BankAccount bankAccount)
+        public async Task<IActionResult> Create([Bind("HouseHoldId,Name,AccountType,StartingBalance,LowBalance")] BankAccount bankAccount)
         {
             if (ModelState.IsValid)
             {
+                bankAccount.OwnerId = _userManager.GetUserId(User);
+                bankAccount.CurrentBalance = bankAccount.StartingBalance;                
                 _context.Add(bankAccount);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Details", "HouseHolds", new { id = bankAccount.HouseHoldId});
             }
             ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", bankAccount.HouseHoldId);
-            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "Id", bankAccount.FpUserId);
+            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "FullName", bankAccount.OwnerId);
             return View(bankAccount);
         }
 
@@ -86,7 +92,7 @@ namespace FinancialPortalProject.Controllers
                 return NotFound();
             }
             ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", bankAccount.HouseHoldId);
-            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "Id", bankAccount.FpUserId);
+            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "Id", bankAccount.OwnerId);
             return View(bankAccount);
         }
 
@@ -95,7 +101,7 @@ namespace FinancialPortalProject.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,HouseHoldId,FpUserId,Name,Type,StartingBalance,CurrentBalance")] BankAccount bankAccount)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,HouseHoldId,FpUserId,Name,AccountType,StartingBalance,CurrentBalance")] BankAccount bankAccount)
         {
             if (id != bankAccount.Id)
             {
@@ -123,7 +129,7 @@ namespace FinancialPortalProject.Controllers
                 return RedirectToAction(nameof(Index));
             }
             ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", bankAccount.HouseHoldId);
-            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "Id", bankAccount.FpUserId);
+            ViewData["OwnerId"] = new SelectList(_context.Users, "Id", "Id", bankAccount.OwnerId);
             return View(bankAccount);
         }
 

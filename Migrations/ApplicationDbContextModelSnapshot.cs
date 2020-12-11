@@ -26,33 +26,34 @@ namespace FinancialPortalProject.Migrations
                         .HasColumnType("integer")
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
-                    b.Property<decimal>("CurrentBalance")
-                        .HasColumnType("decimal(7, 2)");
+                    b.Property<int>("AccountType")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("FpUserId")
-                        .HasColumnType("text");
+                    b.Property<decimal>("CurrentBalance")
+                        .HasColumnType("decimal(9, 2)");
 
                     b.Property<int>("HouseHoldId")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("LowBalance")
+                        .HasColumnType("decimal(9, 2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("character varying(50)")
                         .HasMaxLength(50);
 
-                    b.Property<decimal>("StartingBalance")
-                        .HasColumnType("decimal(7, 2)");
+                    b.Property<string>("OwnerId")
+                        .HasColumnType("text");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("character varying(50)")
-                        .HasMaxLength(50);
+                    b.Property<decimal>("StartingBalance")
+                        .HasColumnType("decimal(9, 2)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FpUserId");
-
                     b.HasIndex("HouseHoldId");
+
+                    b.HasIndex("OwnerId");
 
                     b.ToTable("BankAccounts");
                 });
@@ -92,7 +93,7 @@ namespace FinancialPortalProject.Migrations
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<decimal>("ActualAmount")
-                        .HasColumnType("decimal(7, 2)");
+                        .HasColumnType("decimal(9, 2)");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("integer");
@@ -108,7 +109,7 @@ namespace FinancialPortalProject.Migrations
                         .HasMaxLength(50);
 
                     b.Property<decimal>("TargetAmount")
-                        .HasColumnType("decimal(7, 2)");
+                        .HasColumnType("decimal(9, 2)");
 
                     b.HasKey("Id");
 
@@ -182,7 +183,7 @@ namespace FinancialPortalProject.Migrations
                         .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn);
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(7, 2)");
+                        .HasColumnType("decimal(9, 2)");
 
                     b.Property<int>("BankAccountId")
                         .HasColumnType("integer");
@@ -203,10 +204,8 @@ namespace FinancialPortalProject.Migrations
                         .HasColumnType("character varying(50)")
                         .HasMaxLength(50);
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("character varying(50)")
-                        .HasMaxLength(50);
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -480,15 +479,15 @@ namespace FinancialPortalProject.Migrations
 
             modelBuilder.Entity("FinancialPortalProject.Models.Core.BankAccount", b =>
                 {
-                    b.HasOne("FinancialPortalProject.Models.FpUser", "Owner")
-                        .WithMany("BankAccounts")
-                        .HasForeignKey("FpUserId");
-
                     b.HasOne("FinancialPortalProject.Models.Core.HouseHold", "HouseHold")
                         .WithMany("BankAccounts")
                         .HasForeignKey("HouseHoldId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("FinancialPortalProject.Models.FpUser", "Owner")
+                        .WithMany("BankAccounts")
+                        .HasForeignKey("OwnerId");
                 });
 
             modelBuilder.Entity("FinancialPortalProject.Models.Core.Category", b =>
@@ -530,7 +529,7 @@ namespace FinancialPortalProject.Migrations
                         .WithMany("Transactions")
                         .HasForeignKey("CategoryItemId");
 
-                    b.HasOne("FinancialPortalProject.Models.FpUser", "User")
+                    b.HasOne("FinancialPortalProject.Models.FpUser", "FpUser")
                         .WithMany("Transactions")
                         .HasForeignKey("FpUserId");
                 });

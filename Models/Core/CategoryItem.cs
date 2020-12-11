@@ -21,11 +21,11 @@ namespace FinancialPortalProject.Models.Core
         public string Description { get; set; }
 
         [DataType(DataType.Currency)]
-        [Column(TypeName = "decimal(7, 2)")]
+        [Column(TypeName = "decimal(9, 2)")]
         public decimal TargetAmount { get; set; }
 
         [DataType(DataType.Currency)]
-        [Column(TypeName = "decimal(7, 2)")]
+        [Column(TypeName = "decimal(9, 2)")]
         public decimal ActualAmount { get; set; }
 
         public Category Category { get; set; }

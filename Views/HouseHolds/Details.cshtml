@@ -1,7 +1,10 @@
-﻿@model FinancialPortalProject.Models.Core.HouseHold
+﻿@model FinancialPortalProject.Models.ViewModels.HouseHoldsDetailsVM
+@using FinancialPortalProject.Enums
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<FpUser> userManager
 
 @{
-    ViewData["Title"] = "Details";
+
 }
 
 <h1>Details</h1>
@@ -9,28 +12,444 @@
 <div>
     <h4>HouseHold</h4>
     <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Greeting)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Greeting)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Established)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Established)
-        </dd>
-    </dl>
+    @if (User.IsInRole(nameof(Roles.Head)))
+    {
+        <div class="row">
+            <div class="col">
+                <h4>You are the head of household</h4>
+            </div>
+        </div>
+        <br />
+    }
+    @if (User.IsInRole(nameof(Roles.Member)))
+    {
+        <div class="row">
+            <div class="col">
+                <h4>You are a household member</h4>
+            </div>
+        </div>
+        <br />
+    }
+    <div class="row">
+
+        <div class="col">
+            <dl>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.Household.Name)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Household.Name)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.Household.Greeting)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Household.Greeting)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.Household.Established)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.Household.Established)
+                </dd>
+            </dl>
+            <form asp-controller="HouseHolds" asp-action="RemoveMember" method="post">
+                <input class="btn btn-danger" type="submit" value="Leave Household" />
+            </form>
+
+        </div>
+        <div class="col-8">
+            <dl>
+                @foreach (var member in Model.Household.Members)
+                {
+                    <dt class="col-sm-2">
+                        @member.FullName
+                    </dt>
+                    @if (await userManager.IsInRoleAsync(member, nameof(Roles.Head)))
+                    {
+                        <dd class="col-sm-10">
+                            @member.Email / Head of Household
+                        </dd>
+                    }
+                    else if (await userManager.IsInRoleAsync(member, nameof(Roles.Member)))
+                    {
+                        <dd class="col-sm-10">
+                            @member.Email / Member
+                        </dd>
+                    }
+
+                }
+            </dl>
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>
+                            Account Name
+                        </th>
+                        <th>
+                            Type
+                        </th>
+                        <th>
+                            Current Balance
+                        </th>
+                        <th>
+                            Owner
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Household.BankAccounts)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Name)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.AccountType)
+                            </td>
+
+                            <td>
+                                @Html.DisplayFor(modelItem => item.CurrentBalance)
+                            </td>
+
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Owner.FullName)
+                            </td>
+                            <td>
+                                <a asp-controller="BankAccounts" asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+    <hr />
+    <h3>Categories</h3>
+    <div class="row">
+        @foreach (var category in Model.Household.Categories.OrderBy(c => c.Id))
+        {
+            <div class="col-4">
+                <h6>@category.Name</h6>
+                <ul>
+                    @foreach (var catItem in category.CategoryItems)
+                    {
+                        <li>@catItem.Name</li>
+                    }
+                    <br />
+                </ul>
+            </div>
+        }
+        <a href="#" data-target="#addCatItem" data-toggle="modal">Add Category Item</a>
+
+
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>
+                            Transaction Type
+                        </th>
+                        <th>
+                            Memo
+                        </th>
+                        <th>
+                            Amount
+                        </th>
+                        <th>
+                            Bank Account
+                        </th>
+                        <th>
+                            User
+                        </th>
+                        <th>
+                            Category
+                        </th>
+                        <th>
+                            Transaction Date
+                        </th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var trasnaction in Model.HhTransactions)
+                    {
+                        <tr>
+                            <td>
+                                @trasnaction.TransactionType.ToString()
+                            </td>
+                            <td>
+                                @trasnaction.Memo
+                            </td>
+                            <td>
+                                @trasnaction.Amount
+                            </td>
+                            <td>
+                                @trasnaction.BankAccount.Name
+                            </td>
+                            <td>
+                                @trasnaction.FpUser.FullName
+                            </td>
+                            <td>
+                                @trasnaction.CategoryItem.Category.Name / @trasnaction.CategoryItem.Name
+                            </td>
+                            <td>
+                                @trasnaction.Created.ToString("g")
+                            </td>
+                            <td>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <hr />
+    @if (User.IsInRole(nameof(Roles.Head)))
+    {
+        <div>
+            <a href="#" data-target="#invitation" data-toggle="modal">Create Invite</a>
+        </div>
+    }
+    <div>
+        <a href="#" data-target="#createBank" data-toggle="modal">Create Bank Account</a><br />
+        <a href="#" data-target="#createCat" data-toggle="modal">Create Category</a><br />
+
+        <form asp-controller="HouseHolds" asp-action="Details" class="border">
+            <div class="form-group">
+                <input type="hidden" name="householdId" value="@Model.Household.Id" />
+                <label>Create Transaction For Category</label><br />
+                <select name="categoryId" asp-items="ViewBag.Categories"></select>
+                <input type="submit" class="btn btn-primary" value="Create" />
+            </div>
+        </form>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+
+@if (User.IsInRole(nameof(Roles.Head)))
+{
+
+    <div class="modal fade" id="invitation" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form asp-action="Create" asp-controller="Invitations">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <input type="hidden" name="HouseHoldId" value="@Model.Household.Id" />
+                        <div class="form-group">
+                            <label class="control-label" for="EmailTo">EmailTo</label>
+                            <input class="form-control" type="email" data-val="true" id="EmailTo" maxlength="50" name="EmailTo" required />
+                            <span class="text-danger field-validation-valid" data-valmsg-for="EmailTo" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label" for="Subject">Subject</label>
+                            <input class="form-control" type="text" id="Subject" maxlength="150" name="Subject" required />
+                            <span class="text-danger field-validation-valid" data-valmsg-for="Subject" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label" for="Body">Body</label>
+                            <textarea class="form-control" type="text" id="Body" maxlength="1000" name="Body" required></textarea>
+                            <span class="text-danger field-validation-valid" data-valmsg-for="Body" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label" for="Expires">Expires</label>
+                            <input class="form-control" type="date" id="Expires" name="Expires" />
+                            <span class="text-danger field-validation-valid" data-valmsg-for="Expires" data-valmsg-replace="true"></span>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Create" class="btn btn-primary" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="modal fade" id="createBank" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form asp-controller="BankAccounts" asp-action="Create" name="createBank">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <input type="hidden" name="FpUserId" />
+                        <input type="hidden" name="HouseHoldId" value="@Model.Household.Id" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Name</label>
+                        <input type="text" name="Name" class="form-control" required maxlength="50" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Account Type</label>
+                        <select name="AccountType" asp-items="Html.GetEnumSelectList<AccountType>()" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Starting Balance</label>
+                        <input name="StartingBalance" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Low Balance Alert Value</label>
+                        <input name="LowBalance" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" value="Create" class="btn btn-primary" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
+<div class="modal fade" id="createCat" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form asp-controller="Categories" asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <input type="hidden" name="HouseHoldId" value="@Model.Household.Id" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Name</label>
+                        <input name="Name" class="form-control" required maxlength="50" />
+                        <span class="text-danger field-validation-valid" data-valmsg-for="Name" data-valmsg-replace="true"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Description</label>
+                        <input name="Description" class="form-control" maxlength="50" required />
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" value="Create" class="btn btn-primary" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addCatItem" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form asp-controller="CategoryItems" asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <input type="hidden" name="householdId" value="@Model.Household.Id" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Category</label>
+                        <select name="CategoryId" class="form-control" asp-items="ViewBag.Categories"></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Name</label>
+                        <input name="Name" class="form-control" maxlength="50" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Description</label>
+                        <input name="Description" class="form-control" maxlength="50" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Target Expense</label>
+                        <input name="TargetAmount" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" />
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" value="Create" class="btn btn-primary" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@if (ViewData["CategorySelect"] != null)
+{
+
+    <div class="modal fade" id="createTransaction" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@ViewBag.CategoryName</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form asp-controller="Transactions" asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <label class="control-label">Select Account</label>
+                            <select name="BankAccountId" class="form-control" asp-items="ViewBag.BankAccounts"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Category Item</label>
+                            <select name="CategoryItemId" class="form-control" asp-items="ViewBag.CategorySelect"></select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Transaction Type</label>
+                            <select name="TransactionType" asp-items="Html.GetEnumSelectList<TransactionType>()" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Memo</label>
+                            <input name="Memo" class="form-control" maxlength="50" />
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Amount</label>
+                            <input name="Amount" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" required />
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Create" class="btn btn-primary" />
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    @section Scripts{
+        <script>
+            $(document).ready(function () {
+                $('#createTransaction').modal('show');
+            })
+        </script>
+    }
+}

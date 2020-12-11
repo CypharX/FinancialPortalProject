@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FinancialPortalProject.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -11,23 +12,29 @@ namespace FinancialPortalProject.Models.Core
     {
         public int Id { get; set; }
         public int HouseHoldId { get; set; }
-        public string FpUserId { get; set; }
+        public string OwnerId { get; set; }
 
         [Required]
         [StringLength(50)]
         public string Name { get; set; }
 
         [Required]
-        [StringLength(50)]
-        public string Type { get; set; }
+        [Display(Name = "Account Type")]
+        [EnumDataType(typeof(AccountType))]
+        public AccountType AccountType { get; set; }
+
 
         [DataType(DataType.Currency)]
-        [Column(TypeName = "decimal(7, 2)")]
+        [Column(TypeName = "decimal(9, 2)")]
         public decimal StartingBalance { get; set; }
 
         [DataType(DataType.Currency)]
-        [Column(TypeName = "decimal(7, 2)")]
+        [Column(TypeName = "decimal(9, 2)")]
         public decimal CurrentBalance { get; set; }
+
+        [DataType(DataType.Currency)]
+        [Column(TypeName = "decimal(9, 2)")]
+        public decimal LowBalance { get; set; }
 
         public HouseHold HouseHold { get; set; }
         public FpUser Owner { get; set; }

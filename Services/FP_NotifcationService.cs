@@ -1,0 +1,65 @@
+﻿using FinancialPortalProject.Data;
+using FinancialPortalProject.Enums;
+using FinancialPortalProject.Models;
+using FinancialPortalProject.Models.Core;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace FinancialPortalProject.Services
+{
+    public class FP_NotifcationService : IFP_NotifcationService
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly IEmailSender _emailService;
+        private readonly UserManager<FpUser> _userManager;
+
+        public FP_NotifcationService(ApplicationDbContext context, IEmailSender emailSender, UserManager<FpUser> userManager)
+        {
+            _context = context;
+            _emailService = emailSender;
+            _userManager = userManager;
+        }
+
+        public async Task NotifyAsync(Transaction transaction, BankAccount account)
+        {
+            var user = await _context.Users.FindAsync(transaction.FpUserId);
+            var hhMembers = await _context.Users.Where(u => u.HouseHoldId == account.HouseHoldId).ToListAsync();
+            var notification = new Notification();
+            var formattedTransaction = String.Format("{0:C}", transaction.Amount);
+            var formattedBalance = String.Format("{0:C}", account.CurrentBalance);
+            if (account.CurrentBalance < 0 && account.CurrentBalance + transaction.Amount > 0)
+            {
+                notification.Created = DateTime.Now;
+                notification.HouseHoldId = account.HouseHoldId;
+                notification.Subject = $"Your household account {account.Name} has been overdrafted";
+                notification.Body = $"{user.FullName} has overdrafted the account {account.Name} on {transaction.Created:MMM dd yyyy} with a purchase of {formattedTransaction}";
+               
+            }
+            else if(account.CurrentBalance < account.LowBalance)
+            {
+                notification.Created = DateTime.Now;
+                notification.HouseHoldId = account.HouseHoldId;
+                notification.Subject = $"Your household account {account.Name} has been fallen below your low balance alert";
+                notification.Body = $"{user.FullName} has made a transaction on {transaction.Created:MMM dd yyyy} in the amount of {formattedTransaction} lowering your household account {formattedBalance} which is below your low balance alert";                             
+            }
+            if(!string.IsNullOrWhiteSpace(notification.Subject))
+            {
+                _context.Add(notification);         
+                await _context.SaveChangesAsync();
+                foreach(var member in hhMembers)
+                {
+                    if(await _userManager.IsInRoleAsync(member, nameof(Roles.Head)))
+                    {
+                        await _emailService.SendEmailAsync(member.Email, notification.Subject, notification.Body);
+                    }
+                }
+            }
+           
+        }
+    }
+}

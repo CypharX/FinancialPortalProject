@@ -45,6 +45,7 @@ namespace FinancialPortalProject
 
             services.AddScoped<IFP_FileService, FP_FileService>();
             services.AddScoped<IEmailSender, EmailService>();
+            services.AddScoped<IFP_NotifcationService, FP_NotifcationService>();
             
         }
 

@@ -57,13 +57,13 @@ namespace FinancialPortalProject.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,CategoryId,Name,Description,TargetAmount,ActualAmount")] CategoryItem categoryItem)
+        public async Task<IActionResult> Create([Bind("Id,CategoryId,Name,Description,TargetAmount,ActualAmount")] CategoryItem categoryItem, int householdId)
         {
             if (ModelState.IsValid)
             {
                 _context.Add(categoryItem);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();                
+                return RedirectToAction("Details", "HouseHolds", new { id = householdId});
             }
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Description", categoryItem.CategoryId);
             return View(categoryItem);

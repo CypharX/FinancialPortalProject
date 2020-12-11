@@ -7,16 +7,26 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FinancialPortalProject.Data;
 using FinancialPortalProject.Models;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Identity;
+using FinancialPortalProject.Enums;
 
 namespace FinancialPortalProject.Controllers
 {
     public class InvitationsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IEmailSender _emailSender;
+        private readonly UserManager<FpUser> _userManager;
+        private readonly SignInManager<FpUser> _signInManager;
 
-        public InvitationsController(ApplicationDbContext context)
+        public InvitationsController(ApplicationDbContext context, IEmailSender emailSender, UserManager<FpUser> userManager, SignInManager<FpUser> signInManager)
         {
             _context = context;
+            _emailSender = emailSender;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         // GET: Invitations
@@ -57,16 +67,64 @@ namespace FinancialPortalProject.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,HouseHoldId,Created,Expires,Accepted,EmailTo,Subject,Body,Code")] Invitation invitation)
+        public async Task<IActionResult> Create([Bind("HouseHoldId,Created,Expires,Accepted,EmailTo,Subject,Body,Code")] Invitation invitation)
         {
             if (ModelState.IsValid)
             {
+                invitation.Code = Guid.NewGuid();
+                invitation.Created = DateTime.Now;
                 _context.Add(invitation);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                var callbackUrl = Url.Action("AcceptInvitation", "Invitations",
+                                    new { email = invitation.EmailTo, code = invitation.Code }, protocol: Request.Scheme);
+                var emailBody = $"{invitation.Body} <br /> Register and accept by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>" +
+                                 $" or if already registered you can log in and use the following code <br /> Invitation Code: {invitation.Code}";
+                await _emailSender.SendEmailAsync(invitation.EmailTo, invitation.Subject, emailBody);
+                return RedirectToAction("Details", "HouseHolds", new { id = invitation.HouseHoldId});
             }
             ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", invitation.HouseHoldId);
             return View(invitation);
+        }
+
+        public async Task<IActionResult> AcceptInvitation(string email, string code)
+        {
+            var invitation = await _context.Invitations.FirstOrDefaultAsync(i => i.Code.ToString() == code);
+            if(invitation == null)
+            {
+                TempData["InviteFailed"] = "Your invitation could not be found";
+                return RedirectToAction("InviteFailed", "Invitations");
+            }
+            if(DateTime.Now > invitation.Expires)
+            {
+                TempData["InviteFailed"] = $"Your invitation expired on {invitation.Expires:g}";
+                return RedirectToAction("InviteFailed", "Invitations");
+            }
+            if(invitation.Accepted)
+            {
+                TempData["InviteFailed"] = "Your invitation has previously been accepted";
+                return RedirectToAction("InviteFailed", "Invitations");
+            }
+            
+            else
+            {
+                if(User.Identity.IsAuthenticated)
+                {
+                    var household = await _context.HouseHolds.FirstOrDefaultAsync(hh => hh.Id == invitation.HouseHoldId);
+                    var user = await _userManager.GetUserAsync(User);
+                    invitation.Accepted = true;
+                    household.Members.Add(user);
+                    await _userManager.AddToRoleAsync(user, Roles.Member.ToString());
+                    await _context.SaveChangesAsync();
+                    await _signInManager.RefreshSignInAsync(user);
+                    return RedirectToAction("Details", "Households", new { id = household.Id });
+                }
+                return RedirectToPage("/Account/Register", new { area = "Identity", email = invitation.EmailTo, code = invitation.Code });
+            }
+        }
+
+        public IActionResult InviteFailed()
+        {
+            return View();
         }
 
         // GET: Invitations/Edit/5

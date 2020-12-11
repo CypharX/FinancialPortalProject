@@ -7,22 +7,30 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FinancialPortalProject.Data;
 using FinancialPortalProject.Models.Core;
+using FinancialPortalProject.Enums;
+using Microsoft.AspNetCore.Identity;
+using FinancialPortalProject.Models;
+using FinancialPortalProject.Services;
 
 namespace FinancialPortalProject.Controllers
 {
     public class TransactionsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<FpUser> _userManager;
+        private readonly IFP_NotifcationService _notifcationService;
 
-        public TransactionsController(ApplicationDbContext context)
+        public TransactionsController(ApplicationDbContext context, UserManager<FpUser> userManager, IFP_NotifcationService notifcationService)
         {
             _context = context;
+            _userManager = userManager;
+            _notifcationService = notifcationService;
         }
 
         // GET: Transactions
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Transactions.Include(t => t.BankAccount).Include(t => t.CategoryItem).Include(t => t.User);
+            var applicationDbContext = _context.Transactions.Include(t => t.BankAccount).Include(t => t.CategoryItem).Include(t => t.FpUser);
             return View(await applicationDbContext.ToListAsync());
         }
 
@@ -37,7 +45,7 @@ namespace FinancialPortalProject.Controllers
             var transaction = await _context.Transactions
                 .Include(t => t.BankAccount)
                 .Include(t => t.CategoryItem)
-                .Include(t => t.User)
+                .Include(t => t.FpUser)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (transaction == null)
             {
@@ -61,13 +69,29 @@ namespace FinancialPortalProject.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,BankAccountId,CategoryItemId,FpUserId,Created,Type,Memo,Amount,IsDeleted")] Transaction transaction)
+        public async Task<IActionResult> Create([Bind("Id,BankAccountId,CategoryItemId,FpUserId,Created,TransactionType,Memo,Amount,IsDeleted")] Transaction transaction)
         {
             if (ModelState.IsValid)
             {
+                var bankAccount = await _context.BankAccounts
+                    .Include(ba => ba.HouseHold)
+                    .FirstOrDefaultAsync(ba => ba.Id == transaction.BankAccountId);
+                if(transaction.TransactionType == TransactionType.Deposit)
+                {
+                    bankAccount.CurrentBalance = bankAccount.CurrentBalance + transaction.Amount;
+                }
+                else
+                {
+                    bankAccount.CurrentBalance = bankAccount.CurrentBalance - transaction.Amount;
+                }
+                var categoryItem = await _context.CategoryItems.FirstOrDefaultAsync(ci => ci.Id == transaction.CategoryItemId);
+                categoryItem.ActualAmount = categoryItem.ActualAmount + transaction.Amount;
+                transaction.FpUserId = _userManager.GetUserId(User);
+                transaction.Created = DateTime.Now;
                 _context.Add(transaction);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                await _notifcationService.NotifyAsync(transaction, bankAccount);
+                return RedirectToAction("Details", "HouseHolds", new { id = bankAccount.HouseHoldId});
             }
             ViewData["BankAccountId"] = new SelectList(_context.BankAccounts, "Id", "Name", transaction.BankAccountId);
             ViewData["CategoryItemId"] = new SelectList(_context.CategoryItems, "Id", "Description", transaction.CategoryItemId);
@@ -99,7 +123,7 @@ namespace FinancialPortalProject.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,BankAccountId,CategoryItemId,FpUserId,Created,Type,Memo,Amount,IsDeleted")] Transaction transaction)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,BankAccountId,CategoryItemId,FpUserId,Created,TransactionType,Memo,Amount,IsDeleted")] Transaction transaction)
         {
             if (id != transaction.Id)
             {
@@ -143,7 +167,7 @@ namespace FinancialPortalProject.Controllers
             var transaction = await _context.Transactions
                 .Include(t => t.BankAccount)
                 .Include(t => t.CategoryItem)
-                .Include(t => t.User)
+                .Include(t => t.FpUser)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (transaction == null)
             {

@@ -50,9 +50,11 @@ namespace FinancialPortalProject.Services
                 var context = services.GetRequiredService<ApplicationDbContext>();
                 var userManager = services.GetRequiredService<UserManager<FpUser>>();
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                var configuration = services.GetRequiredService<IConfiguration>();
+                var fileService = services.GetRequiredService<IFP_FileService>();
 
 
-                await ContextSeed.RunSeedMethodsAsync(roleManager, userManager, context);
+                await ContextSeed.RunSeedMethodsAsync(roleManager, userManager, context, configuration, fileService);
 
                 var dbContextSvc = svcProvider.GetRequiredService<ApplicationDbContext>();
                 await dbContextSvc.Database.MigrateAsync();

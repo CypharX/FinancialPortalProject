@@ -1,5 +1,5 @@
 ﻿@model FinancialPortalProject.Models.Core.Transaction
-
+@using FinancialPortalProject.Enums
 @{
     ViewData["Title"] = "Create";
 }
@@ -14,15 +14,15 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
                 <label asp-for="BankAccountId" class="control-label"></label>
-                <select asp-for="BankAccountId" class ="form-control" asp-items="ViewBag.BankAccountId"></select>
+                <select asp-for="BankAccountId" class="form-control" asp-items="ViewBag.BankAccountId"></select>
             </div>
             <div class="form-group">
                 <label asp-for="CategoryItemId" class="control-label"></label>
-                <select asp-for="CategoryItemId" class ="form-control" asp-items="ViewBag.CategoryItemId"></select>
+                <select asp-for="CategoryItemId" class="form-control" asp-items="ViewBag.CategoryItemId"></select>
             </div>
             <div class="form-group">
                 <label asp-for="FpUserId" class="control-label"></label>
-                <select asp-for="FpUserId" class ="form-control" asp-items="ViewBag.FpUserId"></select>
+                <select asp-for="FpUserId" class="form-control" asp-items="ViewBag.FpUserId"></select>
             </div>
             <div class="form-group">
                 <label asp-for="Created" class="control-label"></label>
@@ -30,9 +30,9 @@
                 <span asp-validation-for="Created" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Type" class="control-label"></label>
-                <input asp-for="Type" class="form-control" />
-                <span asp-validation-for="Type" class="text-danger"></span>
+                <label asp-for="TransactionType" class="control-label"></label>
+                <select asp-for="TransactionType" asp-items="Html.GetEnumSelectList<TransactionType>()" class="form-control"></select>
+                <span asp-validation-for="TransactionType" class="text-danger"></span>
             </div>
             <div class="form-group">
                 <label asp-for="Memo" class="control-label"></label>

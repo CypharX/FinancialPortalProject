@@ -63,7 +63,7 @@ namespace FinancialPortalProject.Controllers
             {
                 _context.Add(category);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Details", "HouseHolds", new { id = category.HouseHoldId});
             }
             ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", category.HouseHoldId);
             return View(category);

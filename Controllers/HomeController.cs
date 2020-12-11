@@ -6,19 +6,36 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using FinancialPortalProject.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace FinancialPortalProject.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly UserManager<FpUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, UserManager<FpUser> userManager)
         {
             _logger = logger;
+            _userManager = userManager;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
+        {
+            if(User.Identity.IsAuthenticated)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if(user.HouseHoldId != null)
+                {
+                    return RedirectToAction("Details", "HouseHolds", new { id = user.HouseHoldId });
+                }
+                return RedirectToAction("Lobby");
+            }
+            return View();
+        }
+
+        public IActionResult Lobby()
         {
             return View();
         }

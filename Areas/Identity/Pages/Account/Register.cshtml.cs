@@ -19,6 +19,8 @@ using Microsoft.AspNetCore.Http;
 using FinancialPortalProject.Services;
 using FinancialPortalProject.Extensions;
 using Microsoft.Extensions.Configuration;
+using FinancialPortalProject.Data;
+using FinancialPortalProject.Enums;
 
 namespace FinancialPortalProject.Areas.Identity.Pages.Account
 {
@@ -31,6 +33,7 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
         private readonly IEmailSender _emailSender;
         private readonly IFP_FileService _fileService;
         private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _context;
 
         public RegisterModel(
             UserManager<FpUser> userManager,
@@ -38,7 +41,8 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
             IFP_FileService fileService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -46,12 +50,17 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
             _emailSender = emailSender;
             _fileService = fileService;
             _configuration = configuration;
+            _context = context;
         }
 
         [BindProperty]
         public InputModel Input { get; set; }
 
         public string ReturnUrl { get; set; }
+
+        public string Email { get; set; }
+
+        public string Code { get; set; }
 
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
@@ -89,10 +98,14 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
             [MaxFileSize(2 * 1024 * 1024)]
             [AllowedExtensions(new string[] { ".jpg", ".png", ".jpeg" })]
             public IFormFile Avatar { get; set; }
+
+            public string Code { get; set; }
         }
 
-        public async Task OnGetAsync(string returnUrl = null)
+        public async Task OnGetAsync(string email, string code, string returnUrl = null)
         {
+            Email = email;
+            Code = code;
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
@@ -123,7 +136,7 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
                     user.ImageName = image;
                 }
                 var result = await _userManager.CreateAsync(user, Input.Password);
-                if (result.Succeeded)
+                if (result.Succeeded && string.IsNullOrEmpty(Input.Code))
                 {
                     _logger.LogInformation("User created a new account with password.");
 
@@ -148,7 +161,19 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
                         return LocalRedirect(returnUrl);
                     }
                 }
-                foreach (var error in result.Errors)
+                else if (result.Succeeded && !string.IsNullOrEmpty(Input.Code))
+                {
+                    user.EmailConfirmed = true;
+                    var invitation = _context.Invitations.FirstOrDefault(i => i.Code.ToString() == Input.Code);
+                    invitation.Accepted = true;
+                    var household = _context.HouseHolds.FirstOrDefault(hh => hh.Id == invitation.HouseHoldId);
+                    household.Members.Add(user);
+                    await _userManager.AddToRoleAsync(user, Roles.Member.ToString());
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+                    return RedirectToAction("Details", "HouseHolds", new { id = household.Id });
+                }
+
+                    foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }

@@ -25,10 +25,12 @@ namespace FinancialPortalProject.Data
         public static async Task RunSeedMethodsAsync(
             RoleManager<IdentityRole> roleManager,
             UserManager<FpUser> userManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IConfiguration configuration,
+            IFP_FileService fileService)
         {
             await SeedRolesAsync(roleManager);
-           
+            await SeedDefaultAdminAsync(userManager, configuration, fileService);
         }
 
         private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
@@ -38,24 +40,25 @@ namespace FinancialPortalProject.Data
             await roleManager.CreateAsync(new IdentityRole(Roles.Member.ToString()));           
         }
 
-        //private static async Task SeedDefaultAdminAsync(UserManager<FpUser> userManager)
-        //{
-        //    var adminSettings = _adminSettings.Value;
+        private static async Task SeedDefaultAdminAsync(UserManager<FpUser> userManager, IConfiguration configuration, IFP_FileService fileService)
+        {
 
-        //    if (await userManager.FindByEmailAsync(adminSettings.Email) == null)
-        //    {
-        //        var defaultAdmin = new FpUser
-        //        {
-        //            FirstName = adminSettings.FirstName,
-        //            LastName = adminSettings.LastName,
-        //            Email = adminSettings.Email,
-        //            UserName = adminSettings.Email,
-        //            ImageName = adminSettings.ImageName,
-        //            ImageData = await _fileService.AssignDefaultAvatarAsync(adminSettings.ImageName)
-        //        };
-        //        await userManager.CreateAsync(defaultAdmin, adminSettings.Password);
-        //        await userManager.AddToRoleAsync(defaultAdmin, Roles.Admin.ToString());
-        //    }        
-        //}
+            var user = userManager.FindByEmailAsync(configuration.GetSection("AdminSettings")["Email"]).Result;
+            if (user == null)
+            {
+                var defaultAdmin = new FpUser
+                {
+                    FirstName = configuration.GetSection("AdminSettings")["FirstName"],
+                    LastName = configuration.GetSection("AdminSettings")["LastName"],
+                    Email = configuration.GetSection("AdminSettings")["Email"],
+                    UserName = configuration.GetSection("AdminSettings")["Email"],
+                    ImageName = configuration.GetSection("AdminSettings")["ImageName"],
+                    ImageData = await fileService.AssignDefaultAvatarAsync(configuration.GetSection("AdminSettings")["ImageName"]),
+                    EmailConfirmed = true
+                };
+                await userManager.CreateAsync(defaultAdmin, configuration.GetSection("AdminSettings")["Password"]);
+                await userManager.AddToRoleAsync(defaultAdmin, Roles.Admin.ToString());
+            }
+        }
     }
 }

@@ -16,7 +16,7 @@
                 @Html.DisplayNameFor(model => model.Created)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.Type)
+                @Html.DisplayNameFor(model => model.TransactionType)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.Memo)
@@ -31,7 +31,7 @@
                 @Html.DisplayNameFor(model => model.BankAccount)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.User)
+                @Html.DisplayNameFor(model => model.FpUser)
             </th>
             <th>
                 @Html.DisplayNameFor(model => model.CategoryItem)
@@ -46,7 +46,7 @@
                 @Html.DisplayFor(modelItem => item.Created)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Type)
+                @Html.DisplayFor(modelItem => item.TransactionType)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Memo)
@@ -61,7 +61,7 @@
                 @Html.DisplayFor(modelItem => item.BankAccount.Name)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.User.Id)
+                @Html.DisplayFor(modelItem => item.FpUser.Id)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.CategoryItem.Description)

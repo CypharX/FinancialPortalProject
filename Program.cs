@@ -44,7 +44,9 @@ namespace FinancialPortalProject
                     var context = services.GetRequiredService<ApplicationDbContext>();
                     var userManager = services.GetRequiredService<UserManager<FpUser>>();
                     var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-                    await ContextSeed.RunSeedMethodsAsync(roleManager, userManager, context);
+                    var configuration = services.GetRequiredService<IConfiguration>();
+                    var fileService = services.GetRequiredService<IFP_FileService>();
+                    await ContextSeed.RunSeedMethodsAsync(roleManager, userManager, context, configuration, fileService);
 
                 }
                 catch (Exception ex)

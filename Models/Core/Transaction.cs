@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FinancialPortalProject.Enums;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,20 +19,21 @@ namespace FinancialPortalProject.Models.Core
         public DateTime Created { get; set; }
 
         [Required]
-        [StringLength(50)]
-        public string Type { get; set; }
+        [Display (Name = "Transaction Type")]
+        public TransactionType TransactionType { get; set; }
+
 
         [StringLength(50)]
         public string Memo { get; set; }
 
         [DataType(DataType.Currency)]
-        [Column(TypeName = "decimal(7, 2)")]
+        [Column(TypeName = "decimal(9, 2)")]
         public decimal Amount { get; set; }
 
         public bool IsDeleted { get; set; }
 
         public BankAccount BankAccount { get; set; }
-        public FpUser User { get; set; }
+        public FpUser FpUser { get; set; }
         public CategoryItem CategoryItem { get; set; }
     }
 }
