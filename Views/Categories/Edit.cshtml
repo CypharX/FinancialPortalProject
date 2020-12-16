@@ -1,44 +1,91 @@
 ﻿@model FinancialPortalProject.Models.Core.Category
 
-@{
-    ViewData["Title"] = "Edit";
-}
 
-<h1>Edit</h1>
-
-<h4>Category</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="HouseHoldId" class="control-label"></label>
-                <select asp-for="HouseHoldId" class="form-control" asp-items="ViewBag.HouseHoldId"></select>
-                <span asp-validation-for="HouseHoldId" class="text-danger"></span>
+<div class="layout-px-spacing">
+    <div class="page-header">
+        <div class="page-title">
+            <h2>@Model.Name</h2>
+            <h4>Edit</h4>
+        </div>
+    </div>
+    <div class="row sales layout-top-spacing">
+        <div class="col-4"></div>
+        <div class="col-4">
+            <div class="card component-card_5">
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <input type="hidden" name="Id" value="@Model.Id" />
+                            <input type="hidden" name="HouseHoldId" value="@Model.HouseHoldId" />
+                        </div>
+                        @if (Model.Name == "Deposits")
+                        {
+                            <div class="form-group">
+                                <label class="control-label">Name</label>
+                                <input name="Name" value="@Model.Name" class="form-control" readonly />
+                                <span class="text-danger field-validation-valid" data-valmsg-for="Name" data-valmsg-replace="true"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="form-group">
+                                <label class="control-label">Name</label>
+                                <input name="Name" value="@Model.Name" class="form-control" required maxlength="50" />
+                                <span class="text-danger field-validation-valid" data-valmsg-for="Name" data-valmsg-replace="true"></span>
+                            </div>
+                        }
+                        <div class="form-group">
+                            <label class="control-label">Description</label>
+                            <input name="Description" value="@Model.Description" class="form-control" maxlength="50" required />
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Edit" class="btn btn-primary" />
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="col-4"></div>
+    </div>
+    <h3>Category Items</h3>
+    <div class="row sales layout-top-spacing">
+        @foreach (var item in Model.CategoryItems)
+        {
+            <div class="col-3">
+                <div class="card component-card_1 w-100">
+                    <div class="card-body">
+                        <form asp-controller="CategoryItems" asp-action="Edit">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="form-group">
+                                <input type="hidden" name="Id" value="@item.Id" />
+                                <input type="hidden" name="CategoryId" value="@item.CategoryId" />
+                                <input type="hidden" name="ActualAmount" value="@item.ActualAmount" />
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Name</label>
+                                <input name="Name" value="@item.Name" class="form-control" maxlength="50" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Description</label>
+                                <input name="Description" value="@item.Description" class="form-control" maxlength="50" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Target Expense</label>
+                                <div class="input-group mb-4">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input name="TargetAmount" value="@item.TargetAmount" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" value="Edit" class="btn btn-primary" />
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        }
     </div>
 </div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}

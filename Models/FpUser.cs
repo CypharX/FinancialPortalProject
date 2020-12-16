@@ -46,5 +46,6 @@ namespace FinancialPortalProject.Models
 
         public virtual ICollection<BankAccount> BankAccounts { get; set; } = new HashSet<BankAccount>();
         public virtual ICollection<Transaction> Transactions { get; set; } = new HashSet<Transaction>();
+        public virtual ICollection<Notification> Notifications { get; set; } = new HashSet<Notification>();
     }
 }

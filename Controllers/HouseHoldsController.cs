@@ -34,7 +34,7 @@ namespace FinancialPortalProject.Controllers
         }
 
         // GET: HouseHolds/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int? id, int? categoryId)
         {
             if (id == null)
             {
@@ -43,49 +43,71 @@ namespace FinancialPortalProject.Controllers
             var vm = new HouseHoldsDetailsVM();
             vm.Household = await _context.HouseHolds
                  .Include(hh => hh.Members)
-                 .Include(hh => hh.BankAccounts).ThenInclude(ba => ba.Transactions)
-                 .Include(hh => hh.Categories).ThenInclude(c => c.CategoryItems)
-                 .FirstOrDefaultAsync(m => m.Id == id);
+                 .FirstOrDefaultAsync(hh => hh.Id == id);
             if (vm.Household == null)
             {
                 return NotFound();
             }
-            var hhCategories = await _context.Categories.Where(c => c.HouseHoldId == vm.Household.Id).ToListAsync();
-            ViewData["Categories"] = new SelectList(hhCategories, "Id", "Name");
+            vm.BankAccounts = await _context.BankAccounts
+                .Where(ba => ba.HouseHoldId == vm.Household.Id && ba.IsDeleted == false).ToListAsync();
+            vm.Categories = await _context.Categories
+                .Include(c => c.CategoryItems)
+                .Where(c => c.HouseHoldId == vm.Household.Id && c.IsDeleted == false).ToListAsync();
             vm.HhTransactions = _context.Transactions
                 .Include(t => t.CategoryItem).ThenInclude(ci => ci.Category)
                 .Include(t => t.BankAccount)
                 .Include(t => t.FpUser)
-                .Where(t => t.BankAccount.HouseHoldId == vm.Household.Id).ToList();
+                .Where(t => t.BankAccount.HouseHoldId == vm.Household.Id && t.IsDeleted == false).ToList();
+            foreach (var category in vm.Household.Categories)
+            {
+                foreach (var item in category.CategoryItems)
+                {
+                    category.AmountSpent += item.ActualAmount;
+                }
+            }
+            var nonHeads = new List<FpUser>();
+            foreach (var user in vm.Household.Members)
+            {
+                if(!await _userManager.IsInRoleAsync(user, nameof(Roles.Head)))
+                {
+                    nonHeads.Add(user);
+                }
+            }
+            var itemCategories = vm.Categories.Where(c => c.CategoryItems.Count() > 0);
+            var bankAccounts = await _context.BankAccounts.Where(ba => ba.HouseHoldId == vm.Household.Id && ba.IsDeleted == false).ToListAsync();
+            ViewData["BankAccounts"] = new SelectList(bankAccounts, "Id", "Name");
+            ViewData["AllCategories"] = new SelectList(vm.Categories, "Id", "Name");
+            ViewData["NonHeads"] = new SelectList(nonHeads, "Id", "FullName");
+            ViewData["Categories"] = new SelectList(itemCategories, "Id", "Name");
+            if (categoryId != null)
+            {
+                var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == categoryId && c.IsDeleted == false);
+                var categoryItems = await _context.CategoryItems.Where(ci => ci.CategoryId == categoryId && ci.IsDeleted == false).ToListAsync();
+                var selectedCategory = _context.Categories.FirstOrDefault(c => c.Id == categoryId);
+                if(categoryItems.Count() == 0)
+                {
+                    TempData["Alert"] = "Please select a category with at least one category item to make a transaction";
+                }
+                else
+                {
+                    ViewData["CategorySelect"] = new SelectList(categoryItems, "Id", "Name");
+                    ViewData["Categories"] = new SelectList(itemCategories, "Id", "Name", selectedCategory.Id);
+                    ViewData["CategoryName"] = $"Transaction for {category.Name}";
+                }              
+            }
+            var userId = _userManager.GetUserId(User);
+            if (User.IsInRole(nameof(Roles.Head)) && _context.Notifications.Where(n => n.HouseHoldId == vm.Household.Id && n.IsRead == false).Count() > 0)
+            {
+                vm.HasNotifcations = true;
+            }
+            else if (_context.Notifications.Where(n => n.FpUserId == userId && n.IsRead == false).Count() > 0)
+            {
+                vm.HasNotifcations = true;
+            }
             return View(vm);
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Details(int householdId, int categoryId)
-        {
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
-            var categoryItems = await _context.CategoryItems.Where(ci => ci.CategoryId == categoryId).ToListAsync();
-            var vm = new HouseHoldsDetailsVM();
-            vm.Household = await _context.HouseHolds
-                 .Include(hh => hh.Members)
-                 .Include(hh => hh.BankAccounts).ThenInclude(ba => ba.Transactions)
-                 .Include(hh => hh.Categories).ThenInclude(c => c.CategoryItems)
-                .FirstOrDefaultAsync(m => m.Id == householdId);
-            var hhCategories = await _context.Categories.Where(c => c.HouseHoldId == vm.Household.Id).ToListAsync();
-            var bankAccounts = await _context.BankAccounts.Where(ba => ba.HouseHoldId == vm.Household.Id).ToListAsync();
-            var selectedCategory = _context.Categories.FirstOrDefault(c => c.Id == categoryId);
-            ViewData["CategorySelect"] = new SelectList(categoryItems, "Id", "Name");
-            ViewData["Categories"] = new SelectList(hhCategories, "Id", "Name", selectedCategory.Id);
-            ViewData["BankAccounts"] = new SelectList(bankAccounts, "Id", "Name");
-            ViewData["CategoryName"] = $"Transaction for {category.Name}";
-            vm.HhTransactions = _context.Transactions
-                .Include(t => t.CategoryItem).ThenInclude(ci => ci.Category)
-                .Include(t => t.BankAccount)
-                .Include(t => t.FpUser)
-                .Where(t => t.BankAccount.HouseHoldId == vm.Household.Id).ToList();
-            return View(vm);
-        }
+
 
         // GET: HouseHolds/Create
         public IActionResult Create()
@@ -111,6 +133,33 @@ namespace FinancialPortalProject.Controllers
                 await _userManager.AddToRoleAsync(user, Roles.Head.ToString());
                 await _context.SaveChangesAsync();
                 await _signInManager.RefreshSignInAsync(user);
+
+                var deposits = new Category
+                {
+                    HouseHoldId = houseHold.Id,
+                    Name = "Deposits",
+                    Description = "Deposits",
+                };
+                _context.Add(deposits);
+                await _context.SaveChangesAsync();
+                var regular = new CategoryItem
+                {
+                    CategoryId = deposits.Id,
+                    Name = "Regular Income",
+                    Description = "Regular Income",
+                    TargetAmount = 0
+                };
+                var extra = new CategoryItem
+                {
+                    CategoryId = deposits.Id,
+                    Name = "Extra Income",
+                    Description = "Extra Income",
+                    TargetAmount = 0
+                };
+                _context.Add(regular);
+                _context.Add(extra);
+                await _context.SaveChangesAsync();
+
                 return RedirectToAction("Details", "HouseHolds", new { id = houseHold.Id });
             }
             return View(houseHold);
@@ -202,14 +251,27 @@ namespace FinancialPortalProject.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> RemoveMember()
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LeaveHousehold()
         {
             var user = await _userManager.GetUserAsync(User);
-            var household = await _context.HouseHolds.Include(hh => hh.Members).FirstOrDefaultAsync(hh => hh.Id == user.HouseHoldId);
-
-            if (User.IsInRole(nameof(Roles.Head)) && household.Members.Count() > 1)
+            var household = await _context.HouseHolds
+                .Include(hh => hh.Members)
+                .FirstOrDefaultAsync(hh => hh.Id == user.HouseHoldId);
+            //var test = household.Members.Where(u => await _userManager.IsInRoleAsync(u, nameof(Roles.Head))).ToList();
+            var heads = new List<FpUser>();
+            foreach (var member in household.Members)
             {
-                TempData["RemoveMembers"] = "The head of household may only leave if they are the only person in the household.";
+                if (await _userManager.IsInRoleAsync(member, nameof(Roles.Head)))
+                {
+                    heads.Add(member);
+                }
+            }
+
+            if (User.IsInRole(nameof(Roles.Head)) && household.Members.Count() > 1 && heads.Count() == 1)
+            {
+                TempData["RemoveMembers"] = "A head of household may only leave if they are the only person in the household, or " +
+                    "if there is another head of household in place. Please promote another head of household or remove all other members.";
                 return RedirectToAction("Details", "HouseHolds", new { id = household.Id });
             }
 
@@ -220,12 +282,74 @@ namespace FinancialPortalProject.Controllers
                 _context.HouseHolds.Remove(household);
                 await _context.SaveChangesAsync();
             }
+            foreach (var bankAccount in _context.BankAccounts.Where(ba => ba.OwnerId == user.Id))
+            {
+                bankAccount.IsDeleted = true;
+            }
             var userRole = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
             await _userManager.RemoveFromRoleAsync(user, userRole);
             await _signInManager.RefreshSignInAsync(user);
             return RedirectToAction("Index", "Home");
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveMember(string memberId)
+        {
+            var member = await _context.Users.FindAsync(memberId);
+            member.HouseHoldId = null;
+            await _userManager.RemoveFromRoleAsync(member, nameof(Roles.Member));
+            var memberAccounts = await _context.BankAccounts.Where(ba => ba.OwnerId == member.Id).ToListAsync();
+            foreach (var account in memberAccounts)
+            {
+                account.IsDeleted = true;
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index", "Home");
+        }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PromoteMember(string memberId, bool stepDown)
+        {
+            var memeber = await _context.Users.FindAsync(memberId);
+            await _userManager.RemoveFromRoleAsync(memeber, nameof(Roles.Member));
+            await _userManager.AddToRoleAsync(memeber, nameof(Roles.Head));
+            if(stepDown)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                await _userManager.RemoveFromRoleAsync(user, nameof(Roles.Head));
+                await _userManager.AddToRoleAsync(user, nameof(Roles.Member));
+                await _context.SaveChangesAsync();
+                await _signInManager.RefreshSignInAsync(user);
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Details", "HouseHolds", new { id = memeber.HouseHoldId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StepDown()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var heads = new List<FpUser>();
+            foreach (var member in _context.Users.Where(u => u.HouseHoldId == user.HouseHoldId).ToList())
+            {
+                if (await _userManager.IsInRoleAsync(member, nameof(Roles.Head)))
+                {
+                    heads.Add(member);
+                }
+            }
+            if(heads.Count() == 1)
+            {
+                TempData["Error"] = "A head of household can not step down unless there is another head of household in place";
+                return RedirectToAction("Details", "HouseHolds", new { id = user.HouseHoldId });
+            }          
+            await _userManager.RemoveFromRoleAsync(user, nameof(Roles.Head));
+            await _userManager.AddToRoleAsync(user, nameof(Roles.Member));
+            await _context.SaveChangesAsync();
+            await _signInManager.RefreshSignInAsync(user);
+            return RedirectToAction("Details", "HouseHolds", new { id = user.HouseHoldId });
+        }
     }
 }

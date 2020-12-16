@@ -22,8 +22,8 @@ namespace FinancialPortalProject.Controllers
         }
 
         public async Task<IActionResult> Index()
-        {
-            if(User.Identity.IsAuthenticated)
+        {      
+            if (User.Identity.IsAuthenticated)
             {
                 var user = await _userManager.GetUserAsync(User);
                 if(user.HouseHoldId != null)

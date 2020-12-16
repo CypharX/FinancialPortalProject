@@ -9,6 +9,8 @@ using FinancialPortalProject.Data;
 using FinancialPortalProject.Models.Core;
 using Microsoft.AspNetCore.Identity;
 using FinancialPortalProject.Models;
+using FinancialPortalProject.Enums;
+using FinancialPortalProject.Services;
 
 namespace FinancialPortalProject.Controllers
 {
@@ -16,11 +18,13 @@ namespace FinancialPortalProject.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<FpUser> _userManager;
+        private readonly IFP_NotifcationService _notifcationService;
 
-        public BankAccountsController(ApplicationDbContext context, UserManager<FpUser> userManager)
+        public BankAccountsController(ApplicationDbContext context, UserManager<FpUser> userManager, IFP_NotifcationService notifcationService)
         {
             _context = context;
             _userManager = userManager;
+            _notifcationService = notifcationService;
         }
 
         // GET: BankAccounts
@@ -167,6 +171,58 @@ namespace FinancialPortalProject.Controllers
         private bool BankAccountExists(int id)
         {
             return _context.BankAccounts.Any(e => e.Id == id);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SoftDelete(int? id)
+        {
+            if(id == null)
+            {
+                return NotFound();
+            }
+            var bankAccount = await _context.BankAccounts.FindAsync(id);
+            bankAccount.IsDeleted = true;
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Details", "HouseHolds", new { id = bankAccount.HouseHoldId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TransferFunds(int sendingAccountId, int receivingAccountId, decimal amount)
+        {
+            var sendingAccount = await _context.BankAccounts.FindAsync(sendingAccountId);
+            var receivingAccount = await _context.BankAccounts.FindAsync(receivingAccountId);
+            sendingAccount.CurrentBalance -= amount;
+            receivingAccount.CurrentBalance += amount;
+            var user = await _userManager.GetUserAsync(User);
+            await _context.SaveChangesAsync();
+
+            var outTransaction = new Transaction
+            {
+                BankAccountId = sendingAccount.Id,
+                FpUserId = user.Id,
+                Created = DateTime.Now,
+                TransactionType = TransactionType.Withdrawal,
+                Memo = $"Money transfered to {receivingAccount.Name}",
+                Amount = amount
+            };
+
+            var inTransaction = new Transaction
+            {
+                BankAccountId = receivingAccount.Id,
+                FpUserId = user.Id,
+                Created = DateTime.Now,
+                TransactionType = TransactionType.Deposit,
+                Memo = $"Money received from {sendingAccount.Name}",
+                Amount = amount
+            };
+            _context.Add(inTransaction);
+            _context.Add(outTransaction);
+            await _context.SaveChangesAsync();
+
+            await _notifcationService.NotifyAsync(outTransaction, sendingAccount);
+            return RedirectToAction("Details", "HouseHolds", new { id = user.HouseHoldId });
         }
     }
 }

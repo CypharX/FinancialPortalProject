@@ -36,6 +36,8 @@ namespace FinancialPortalProject.Models.Core
         [Column(TypeName = "decimal(9, 2)")]
         public decimal LowBalance { get; set; }
 
+        public bool IsDeleted { get; set; }
+
         public HouseHold HouseHold { get; set; }
         public FpUser Owner { get; set; }
 

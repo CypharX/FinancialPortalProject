@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,15 +14,7 @@ namespace FinancialPortalProject.Data
 {
     public class ContextSeed
     {
-        //private readonly IFP_FileService _fileService;
-        //private readonly IOptions<AdminSettings> _adminSettings;
-
-        //public ContextSeed(IOptions<AdminSettings> adminSettings)
-        //{
-        //    _adminSettings = adminSettings;
-        //}
-        
-
+       
         public static async Task RunSeedMethodsAsync(
             RoleManager<IdentityRole> roleManager,
             UserManager<FpUser> userManager,
@@ -42,23 +35,34 @@ namespace FinancialPortalProject.Data
 
         private static async Task SeedDefaultAdminAsync(UserManager<FpUser> userManager, IConfiguration configuration, IFP_FileService fileService)
         {
-
-            var user = userManager.FindByEmailAsync(configuration.GetSection("AdminSettings")["Email"]).Result;
-            if (user == null)
+            try
             {
-                var defaultAdmin = new FpUser
+                var user = userManager.FindByEmailAsync(configuration.GetSection("AdminSettings")["Email"]).Result;
+                if (user == null)
                 {
-                    FirstName = configuration.GetSection("AdminSettings")["FirstName"],
-                    LastName = configuration.GetSection("AdminSettings")["LastName"],
-                    Email = configuration.GetSection("AdminSettings")["Email"],
-                    UserName = configuration.GetSection("AdminSettings")["Email"],
-                    ImageName = configuration.GetSection("AdminSettings")["ImageName"],
-                    ImageData = await fileService.AssignDefaultAvatarAsync(configuration.GetSection("AdminSettings")["ImageName"]),
-                    EmailConfirmed = true
-                };
-                await userManager.CreateAsync(defaultAdmin, configuration.GetSection("AdminSettings")["Password"]);
-                await userManager.AddToRoleAsync(defaultAdmin, Roles.Admin.ToString());
+                    var defaultAdmin = new FpUser
+                    {
+                        FirstName = configuration.GetSection("AdminSettings")["FirstName"],
+                        LastName = configuration.GetSection("AdminSettings")["LastName"],
+                        Email = configuration.GetSection("AdminSettings")["Email"],
+                        UserName = configuration.GetSection("AdminSettings")["Email"],
+                        ImageName = configuration.GetSection("AdminSettings")["ImageName"],
+                        ImageData = await fileService.AssignDefaultAvatarAsync(configuration.GetSection("AdminSettings")["ImageName"]),
+                        EmailConfirmed = true
+                    };
+                    await userManager.CreateAsync(defaultAdmin, configuration.GetSection("AdminSettings")["Password"]);
+                    await userManager.AddToRoleAsync(defaultAdmin, Roles.Admin.ToString());
+                }
             }
+            catch(Exception ex)
+            {
+                Debug.WriteLine("************** ERROR **************");
+                Debug.WriteLine("Error Seeding Default Admin User.");
+                Debug.WriteLine(ex.Message);
+                Debug.WriteLine("***********************************");
+                throw;
+            }
+          
         }
     }
 }

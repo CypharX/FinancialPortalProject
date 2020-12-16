@@ -10,6 +10,7 @@ namespace FinancialPortalProject.Models.Core
     {
         public int Id { get; set; }
         public int HouseHoldId { get; set; }
+        public string FpUserId { get; set; }
 
         [DataType(DataType.Date)]
         public DateTime Created { get; set; }
@@ -25,5 +26,6 @@ namespace FinancialPortalProject.Models.Core
         public bool IsRead { get; set; }
 
         public HouseHold HouseHold { get; set; }
+        public FpUser FpUser { get; set; }
     }
 }

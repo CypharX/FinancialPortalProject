@@ -35,6 +35,9 @@ namespace FinancialPortalProject.Migrations
                     b.Property<int>("HouseHoldId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<decimal>("LowBalance")
                         .HasColumnType("decimal(9, 2)");
 
@@ -73,6 +76,9 @@ namespace FinancialPortalProject.Migrations
                     b.Property<int>("HouseHoldId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("character varying(100)")
@@ -102,6 +108,9 @@ namespace FinancialPortalProject.Migrations
                         .IsRequired()
                         .HasColumnType("character varying(200)")
                         .HasMaxLength(200);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -157,6 +166,9 @@ namespace FinancialPortalProject.Migrations
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("FpUserId")
+                        .HasColumnType("text");
+
                     b.Property<int>("HouseHoldId")
                         .HasColumnType("integer");
 
@@ -169,6 +181,8 @@ namespace FinancialPortalProject.Migrations
                         .HasMaxLength(150);
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FpUserId");
 
                     b.HasIndex("HouseHoldId");
 
@@ -510,6 +524,10 @@ namespace FinancialPortalProject.Migrations
 
             modelBuilder.Entity("FinancialPortalProject.Models.Core.Notification", b =>
                 {
+                    b.HasOne("FinancialPortalProject.Models.FpUser", "FpUser")
+                        .WithMany("Notifications")
+                        .HasForeignKey("FpUserId");
+
                     b.HasOne("FinancialPortalProject.Models.Core.HouseHold", "HouseHold")
                         .WithMany("Notifications")
                         .HasForeignKey("HouseHoldId")

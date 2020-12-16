@@ -52,12 +52,12 @@ namespace FinancialPortalProject.Services
                 var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
                 var configuration = services.GetRequiredService<IConfiguration>();
                 var fileService = services.GetRequiredService<IFP_FileService>();
-
-
+              
+                await context.Database.MigrateAsync();
                 await ContextSeed.RunSeedMethodsAsync(roleManager, userManager, context, configuration, fileService);
 
-                var dbContextSvc = svcProvider.GetRequiredService<ApplicationDbContext>();
-                await dbContextSvc.Database.MigrateAsync();
+               
+                
             }
             catch (Exception ex)
             {

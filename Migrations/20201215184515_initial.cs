@@ -102,7 +102,8 @@ namespace FinancialPortalProject.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     HouseHoldId = table.Column<int>(nullable: false),
                     Name = table.Column<string>(maxLength: 100, nullable: false),
-                    Description = table.Column<string>(maxLength: 500, nullable: false)
+                    Description = table.Column<string>(maxLength: 500, nullable: false),
+                    IsDeleted = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -135,29 +136,6 @@ namespace FinancialPortalProject.Migrations
                     table.PrimaryKey("PK_Invitations", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Invitations_HouseHolds_HouseHoldId",
-                        column: x => x.HouseHoldId,
-                        principalTable: "HouseHolds",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Notifications",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    HouseHoldId = table.Column<int>(nullable: false),
-                    Created = table.Column<DateTime>(nullable: false),
-                    Subject = table.Column<string>(maxLength: 150, nullable: false),
-                    Body = table.Column<string>(maxLength: 1000, nullable: false),
-                    IsRead = table.Column<bool>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Notifications", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Notifications_HouseHolds_HouseHoldId",
                         column: x => x.HouseHoldId,
                         principalTable: "HouseHolds",
                         principalColumn: "Id",
@@ -256,23 +234,55 @@ namespace FinancialPortalProject.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     HouseHoldId = table.Column<int>(nullable: false),
-                    FpUserId = table.Column<string>(nullable: true),
+                    OwnerId = table.Column<string>(nullable: true),
                     Name = table.Column<string>(maxLength: 50, nullable: false),
                     AccountType = table.Column<int>(nullable: false),
-                    StartingBalance = table.Column<decimal>(type: "decimal(7, 2)", nullable: false),
-                    CurrentBalance = table.Column<decimal>(type: "decimal(7, 2)", nullable: false)
+                    StartingBalance = table.Column<decimal>(type: "decimal(9, 2)", nullable: false),
+                    CurrentBalance = table.Column<decimal>(type: "decimal(9, 2)", nullable: false),
+                    LowBalance = table.Column<decimal>(type: "decimal(9, 2)", nullable: false),
+                    IsDeleted = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BankAccounts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_BankAccounts_AspNetUsers_FpUserId",
+                        name: "FK_BankAccounts_HouseHolds_HouseHoldId",
+                        column: x => x.HouseHoldId,
+                        principalTable: "HouseHolds",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BankAccounts_AspNetUsers_OwnerId",
+                        column: x => x.OwnerId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    HouseHoldId = table.Column<int>(nullable: false),
+                    FpUserId = table.Column<string>(nullable: true),
+                    Created = table.Column<DateTime>(nullable: false),
+                    Subject = table.Column<string>(maxLength: 150, nullable: false),
+                    Body = table.Column<string>(maxLength: 1000, nullable: false),
+                    IsRead = table.Column<bool>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notifications_AspNetUsers_FpUserId",
                         column: x => x.FpUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_BankAccounts_HouseHolds_HouseHoldId",
+                        name: "FK_Notifications_HouseHolds_HouseHoldId",
                         column: x => x.HouseHoldId,
                         principalTable: "HouseHolds",
                         principalColumn: "Id",
@@ -288,8 +298,9 @@ namespace FinancialPortalProject.Migrations
                     CategoryId = table.Column<int>(nullable: false),
                     Name = table.Column<string>(maxLength: 50, nullable: false),
                     Description = table.Column<string>(maxLength: 200, nullable: false),
-                    TargetAmount = table.Column<decimal>(type: "decimal(7, 2)", nullable: false),
-                    ActualAmount = table.Column<decimal>(type: "decimal(7, 2)", nullable: false)
+                    TargetAmount = table.Column<decimal>(type: "decimal(9, 2)", nullable: false),
+                    ActualAmount = table.Column<decimal>(type: "decimal(9, 2)", nullable: false),
+                    IsDeleted = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -314,7 +325,7 @@ namespace FinancialPortalProject.Migrations
                     Created = table.Column<DateTime>(nullable: false),
                     TransactionType = table.Column<int>(nullable: false),
                     Memo = table.Column<string>(maxLength: 50, nullable: true),
-                    Amount = table.Column<decimal>(type: "decimal(7, 2)", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(9, 2)", nullable: false),
                     IsDeleted = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
@@ -383,14 +394,14 @@ namespace FinancialPortalProject.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_BankAccounts_FpUserId",
-                table: "BankAccounts",
-                column: "FpUserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_BankAccounts_HouseHoldId",
                 table: "BankAccounts",
                 column: "HouseHoldId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BankAccounts_OwnerId",
+                table: "BankAccounts",
+                column: "OwnerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Categories_HouseHoldId",
@@ -406,6 +417,11 @@ namespace FinancialPortalProject.Migrations
                 name: "IX_Invitations_HouseHoldId",
                 table: "Invitations",
                 column: "HouseHoldId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_FpUserId",
+                table: "Notifications",
+                column: "FpUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Notifications_HouseHoldId",

@@ -34,9 +34,11 @@ namespace FinancialPortalProject.Services
             var formattedBalance = String.Format("{0:C}", account.CurrentBalance);
             if (account.CurrentBalance < 0 && account.CurrentBalance + transaction.Amount > 0)
             {
+               
                 notification.Created = DateTime.Now;
                 notification.HouseHoldId = account.HouseHoldId;
-                notification.Subject = $"Your household account {account.Name} has been overdrafted";
+                notification.FpUserId = account.OwnerId;
+                notification.Subject = $"Your account {account.Name} has been overdrafted";
                 notification.Body = $"{user.FullName} has overdrafted the account {account.Name} on {transaction.Created:MMM dd yyyy} with a purchase of {formattedTransaction}";
                
             }
@@ -44,8 +46,9 @@ namespace FinancialPortalProject.Services
             {
                 notification.Created = DateTime.Now;
                 notification.HouseHoldId = account.HouseHoldId;
-                notification.Subject = $"Your household account {account.Name} has been fallen below your low balance alert";
-                notification.Body = $"{user.FullName} has made a transaction on {transaction.Created:MMM dd yyyy} in the amount of {formattedTransaction} lowering your household account {formattedBalance} which is below your low balance alert";                             
+                notification.FpUserId = account.OwnerId;
+                notification.Subject = $"Your account {account.Name} has been fallen below your low balance alert";
+                notification.Body = $"{user.FullName} has made a transaction on {transaction.Created:MMM dd yyyy} in the amount of {formattedTransaction} lowering your account balance to {formattedBalance} which is below your low balance alert";                             
             }
             if(!string.IsNullOrWhiteSpace(notification.Subject))
             {
@@ -54,6 +57,10 @@ namespace FinancialPortalProject.Services
                 foreach(var member in hhMembers)
                 {
                     if(await _userManager.IsInRoleAsync(member, nameof(Roles.Head)))
+                    {
+                        await _emailService.SendEmailAsync(member.Email, notification.Subject, notification.Body);
+                    }
+                    else if(notification.FpUserId == member.Id)
                     {
                         await _emailService.SendEmailAsync(member.Email, notification.Subject, notification.Body);
                     }

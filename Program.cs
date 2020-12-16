@@ -19,8 +19,8 @@ namespace FinancialPortalProject
         public async static Task Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
-            await SeedDataAsync(host);
             await DataHelper.ManageData(host);
+            await SeedDataAsync(host);
             host.Run();
         }
 

@@ -69,10 +69,19 @@ namespace FinancialPortalProject.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,BankAccountId,CategoryItemId,FpUserId,Created,TransactionType,Memo,Amount,IsDeleted")] Transaction transaction)
+        public async Task<IActionResult> Create([Bind("BankAccountId,CategoryItemId,Memo,Amount")] Transaction transaction)
         {
+            var catItem = await _context.CategoryItems.Include(ci => ci.Category).FirstOrDefaultAsync(ci => ci.Id == transaction.CategoryItemId);
             if (ModelState.IsValid)
             {
+                if(catItem.Category.Name == "Deposits")
+                {
+                    transaction.TransactionType = TransactionType.Deposit;
+                }
+                else
+                {
+                    transaction.TransactionType = TransactionType.Withdrawal;
+                }
                 var bankAccount = await _context.BankAccounts
                     .Include(ba => ba.HouseHold)
                     .FirstOrDefaultAsync(ba => ba.Id == transaction.BankAccountId);
@@ -182,10 +191,28 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var transaction = await _context.Transactions.FindAsync(id);
-            _context.Transactions.Remove(transaction);
+            var transaction = await _context.Transactions
+                .Include(t => t.BankAccount)
+                .Include(t => t.CategoryItem)
+                .FirstOrDefaultAsync(t => t.Id == id);
+            transaction.IsDeleted = true;
+
+            if(transaction.TransactionType == TransactionType.Deposit)
+            {
+                transaction.BankAccount.CurrentBalance -= transaction.Amount;
+            }
+            else
+            {
+                transaction.BankAccount.CurrentBalance += transaction.Amount;
+            }
+
+            if(transaction.CategoryItem != null)
+            {
+                transaction.CategoryItem.ActualAmount -= transaction.Amount;
+            }
+
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index", "Home");
         }
 
         private bool TransactionExists(int id)

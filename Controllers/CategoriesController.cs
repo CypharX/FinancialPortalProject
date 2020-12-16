@@ -41,7 +41,7 @@ namespace FinancialPortalProject.Controllers
             {
                 return NotFound();
             }
-
+            
             return View(category);
         }
 
@@ -77,7 +77,7 @@ namespace FinancialPortalProject.Controllers
                 return NotFound();
             }
 
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _context.Categories.Include(c => c.CategoryItems).FirstOrDefaultAsync(c => c.Id == id);
             if (category == null)
             {
                 return NotFound();
@@ -116,10 +116,9 @@ namespace FinancialPortalProject.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", category.HouseHoldId);
-            return View(category);
+
+            return RedirectToAction("Edit", "Categories", new { id = category.Id});
         }
 
         // GET: Categories/Delete/5

@@ -3,439 +3,420 @@
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<FpUser> userManager
 
-@{
 
-}
+<div class="layout-px-spacing">
+    <div class="page-header">
+        <div class="page-title">
+            <h2>@Model.Household.Name</h2>
+            <h4>@Model.Household.Greeting</h4>
+            <h6>Est: @Model.Household.Established?.ToString("MMM dd yyyy")</h6>
+        </div>
+        <nav class="breadcrumb-one" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></a></li>
+                <li class="breadcrumb-item"><a href="javascript:void(0);">Analytics</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="row sales layout-top-spacing">
+        <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12 col-12 layout-spacing">
+            <div class="widget widget-chart-two h-100">
+                <div class="widget-heading">
+                    <h5 class="">Members</h5>
+                </div>
+                <div class="widget-content d-flex flex-column">
+                    <dl class="mb-5">
+                        @foreach (var member in Model.Household.Members)
+                        {
+                            @if (await userManager.IsInRoleAsync(member, nameof(Roles.Head)))
+                            {
+                                <dt class="col-sm-3 text-teal">
+                                    @member.FullName
+                                </dt>
+                                <dd class="col-sm-9 text-white">
+                                    @member.Email / Head of Household
+                                </dd>
+                            }
+                        }
+                        @foreach (var member in Model.Household.Members)
+                        {
+                            if (await userManager.IsInRoleAsync(member, nameof(Roles.Member)))
+                            {
+                                <dt class="col-sm-3 text-teal">
+                                    @member.FullName
+                                </dt>
+                                <dd class="col-sm-9 text-white">
+                                    @member.Email / Member
+                                </dd>
+                            }
+                        }
 
-<h1>Details</h1>
+                    </dl>
 
-<div>
-    <h4>HouseHold</h4>
-    <hr />
+                    <div class="mt-auto ml-3 mb-3 fixed-bottom position-absolute">
+                        @if (User.IsInRole(nameof(Roles.Head)))
+                        {
+                            <button id="btndefault" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">
+                                HoH Tools
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="btndefault">
+                                <a href="#" data-target="#invitation" data-toggle="modal" class="dropdown-item">Send Invite</a>
+                                <a href="#" data-target="#removeMember" data-toggle="modal" class="dropdown-item">Remove Member</a>
+                                <a href="#" data-target="#promoteHoh" data-toggle="modal" class="dropdown-item">Promote New Head of Household</a>
+                                <a href="#" data-target="#stepDown" data-toggle="modal" class="dropdown-item">Step Down From New Head of Household</a>
+                            </div>
+                        }
+                        <a href="#" data-target="#leaveHousehold" data-toggle="modal" class="btn btn-danger">Leave Household</a>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-8 col-lg-12 col-md-12 col-sm-12 col-12 layout-spacing">
+            <div class="widget widget-chart-one h-100">
+                <div class="widget-heading">
+                    <h5 class="">Bank Accounts</h5>
+                </div>
+                <div class="widget-content">
+                    <div class="tabs tab-content">
+                        <div class="tabcontent">
+                            <table class="table table-bordered table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Account Name
+                                        </th>
+                                        <th>
+                                            Type
+                                        </th>
+                                        <th>
+                                            Current Balance
+                                        </th>
+                                        <th>
+                                            Owner
+                                        </th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.BankAccounts)
+                                    {
+                                        <tr>
+                                            <td class="text-white">
+                                                @Html.DisplayFor(modelItem => item.Name)
+                                            </td>
+                                            <td class="text-white">
+                                                @Html.DisplayFor(modelItem => item.AccountType)
+                                            </td>
+                                            @if (item.CurrentBalance < 0)
+                                            {
+                                                <td class="text-danger font-weight-bold">
+                                                    @Html.DisplayFor(modelItem => item.CurrentBalance)
+                                                </td>
+                                            }
+                                            else
+                                            {
+                                                <td class="text-white">
+                                                    @Html.DisplayFor(modelItem => item.CurrentBalance)
+                                                </td>
+                                            }
+                                            <td class="text-white">
+                                                @Html.DisplayFor(modelItem => item.Owner.FullName)
+                                            </td>
+                                            <td>
+                                                <form id="deleteBank-@item.Id" asp-controller="BankAccounts" asp-action="SoftDelete" asp-route-id="@item.Id"></form>
+                                                <a href="#" data-toggle="modal" data-target="#deleteBank-@item.Id" class="text-danger font-weight-bold">Remove</a>
+                                            </td>
+                                        </tr>
+                                        <div class="modal fade" id="deleteBank-@item.Id" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Remove Bank Account?</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                            <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>
+                                                            You are about to remove the account: @item.Name from your household. Are you sure?
+                                                        </p>
+                                                        <form id="deleteBank-@item.Id" asp-controller="BankAccounts" asp-action="SoftDelete" asp-route-id="@item.Id">
+                                                            <input type="submit" class="btn btn-danger" value="Remove" />
+                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <a class="btn btn-secondary mt-3" href="#" data-target="#createBank" data-toggle="modal">Add Bank Account</a>
+                        @if (Model.BankAccounts.Count() > 1)
+                        {
+                            <a class="btn btn-success mt-3" href="#" data-target="#transferFunds" data-toggle="modal">Transfer Funds</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row sales layout-top-spacing">
+        <div class="col layout-spacing">
+            <div class="widget widget-chart-two h-100">
+                <div class="widget-heading">
+                    <h5>Budget Categories</h5>
+                    <h6>(Click for Details)</h6>
+                </div>
+                <div class="widget-content">
+                    <div class="row ml-2">
+                        @foreach (var category in Model.Categories.OrderBy(c => c.Id))
+                        {
+                            <div class="col-2">
+                                <h6><a href="javascript:void(0);" class="bs-popover text-teal" data-html="true" data-container="body" data-content="Total Amount - @category.AmountSpent">@category.Name</a></h6>
+                                <ul>
+                                    @foreach (var catItem in category.CategoryItems.Where(ci => ci.IsDeleted == false))
+                                    {
+                                        <li><a href="javascript:void(0);" class="bs-popover" data-html="true" data-container="body" data-content="Target Amount - @catItem.TargetAmount <br /> Actual Amount - @catItem.ActualAmount">@catItem.Name</a></li>
+                                    }
+
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                    <div class="mt-3">
+                        <a class="btn btn-secondary ml-3" href="#" data-target="#createCat" data-toggle="modal">Create Category</a>
+                        <a class="btn btn-secondary ml-2" href="#" data-target="#addCatItem" data-toggle="modal">Add Category Item</a>
+                        <a class="btn btn-danger ml-2" href="#" data-target="#resetData" data-toggle="modal">Reset Purchase Data</a>
+                        <a class="btn btn-primary ml-2" href="#" data-target="#editCategory" data-toggle="modal">Edit Category</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row sales layout-top-spacing">
+        <div class="col layout-spacing">
+            <div class="widget widget-chart-two h-100">
+                <div class="widget-heading">
+                    <h5 class="">Transactions</h5>
+                </div>
+                <div class="widget-content">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Bank Account
+                                </th>
+                                <th>
+                                    Amount
+                                </th>
+                                <th>
+                                    Transaction Type
+                                </th>
+                                <th>
+                                    Memo
+                                </th>
+                                <th>
+                                    User
+                                </th>
+                                <th>
+                                    Category
+                                </th>
+                                <th>
+                                    Transaction Date
+                                </th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var transaction in Model.HhTransactions.OrderByDescending(t => t.Created))
+                            {
+
+                                <tr>
+                                    <td class="text-white">
+                                        @transaction.BankAccount.Name
+                                    </td>
+                                    <td class="text-white">
+                                        @Html.DisplayFor(modelItem => transaction.Amount)
+                                    </td>
+                                    <td class="text-white">
+                                        @transaction.TransactionType.ToString()
+                                    </td>
+                                    <td class="text-white">
+                                        @transaction.Memo
+                                    </td>
+                                    <td class="text-white">
+                                        @transaction.FpUser.FullName
+                                    </td>
+                                    @if (transaction.CategoryItemId != null)
+                                    {
+                                        <td class="text-white">
+                                            @transaction.CategoryItem.Category.Name / @transaction.CategoryItem.Name
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td class="text-white">
+                                            Transfer
+                                        </td>
+                                    }
+                                    <td class="text-white">
+                                        @transaction.Created.ToString("MMM dd yyyy")
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-danger font-weight-bold" data-target="#deleteTransaction-@transaction.Id" data-toggle="modal">Delete</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    @if (Model.BankAccounts.Count() > 0)
+                    {
+                        <form asp-controller="HouseHolds" asp-action="Details" method="get" class="mt-3 ml-3">
+                            <div class="form-group col-3">
+                                <input type="hidden" name="id" value="@Model.Household.Id" />
+                                <label>
+                                    Create Transaction For Category<br />
+                                    (Must have at least one item):
+                                </label><br />
+                                <select class="form-control" name="categoryId" asp-items="ViewBag.Categories" style="max-width: 14rem"></select>
+                                <input type="submit" class="btn btn-success mt-2" value="Create Transaction" />
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mb-2 mt-2 ml-3 mr-3" role="alert">
+                            <h5>You can not create transactions until you have at least one bank account in your household</h5>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @foreach (var transaction in Model.HhTransactions)
+    {
+        <div class="modal fade" id="deleteTransaction-@transaction.Id" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Send Invitation</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            Are you sure you want to delete this transaction and revert the funds?
+                        </p>
+                        <form asp-action="Delete" asp-controller="Transactions">
+                            <input type="hidden" name="id" value="@transaction.Id" />
+                            <input type="submit" value="Delete" class="btn btn-danger" />
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+
     @if (User.IsInRole(nameof(Roles.Head)))
     {
-        <div class="row">
-            <div class="col">
-                <h4>You are the head of household</h4>
+
+        <div class="modal fade" id="invitation" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLongTitle">Send Invitation</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form asp-action="Create" asp-controller="Invitations">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <input type="hidden" name="HouseHoldId" value="@Model.Household.Id" />
+                            <div class="form-group">
+                                <label class="control-label" for="EmailTo">Email To</label>
+                                <input class="form-control" type="email" data-val="true" id="EmailTo" maxlength="50" name="EmailTo" required />
+                                <span class="text-danger field-validation-valid" data-valmsg-for="EmailTo" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label" for="Subject">Subject</label>
+                                <input class="form-control" type="text" id="Subject" maxlength="150" name="Subject" required />
+                                <span class="text-danger field-validation-valid" data-valmsg-for="Subject" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label" for="Body">Body</label>
+                                <textarea class="form-control" type="text" id="Body" maxlength="1000" name="Body" required></textarea>
+                                <span class="text-danger field-validation-valid" data-valmsg-for="Body" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label" for="Expires">Expires</label>
+                                <input class="form-control" type="date" id="Expires" name="Expires" />
+                                <span class="text-danger field-validation-valid" data-valmsg-for="Expires" data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" value="Create" class="btn btn-primary" />
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-        </div>
-        <br />
-    }
-    @if (User.IsInRole(nameof(Roles.Member)))
-    {
-        <div class="row">
-            <div class="col">
-                <h4>You are a household member</h4>
-            </div>
-        </div>
-        <br />
-    }
-    <div class="row">
-
-        <div class="col">
-            <dl>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.Household.Name)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Household.Name)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.Household.Greeting)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Household.Greeting)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.Household.Established)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.Household.Established)
-                </dd>
-            </dl>
-            <form asp-controller="HouseHolds" asp-action="RemoveMember" method="post">
-                <input class="btn btn-danger" type="submit" value="Leave Household" />
-            </form>
-
-        </div>
-        <div class="col-8">
-            <dl>
-                @foreach (var member in Model.Household.Members)
-                {
-                    <dt class="col-sm-2">
-                        @member.FullName
-                    </dt>
-                    @if (await userManager.IsInRoleAsync(member, nameof(Roles.Head)))
-                    {
-                        <dd class="col-sm-10">
-                            @member.Email / Head of Household
-                        </dd>
-                    }
-                    else if (await userManager.IsInRoleAsync(member, nameof(Roles.Member)))
-                    {
-                        <dd class="col-sm-10">
-                            @member.Email / Member
-                        </dd>
-                    }
-
-                }
-            </dl>
-        </div>
-    </div>
-    <hr />
-    <div class="row">
-        <div class="col">
-            <table class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>
-                            Account Name
-                        </th>
-                        <th>
-                            Type
-                        </th>
-                        <th>
-                            Current Balance
-                        </th>
-                        <th>
-                            Owner
-                        </th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model.Household.BankAccounts)
-                    {
-                        <tr>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Name)
-                            </td>
-                            <td>
-                                @Html.DisplayFor(modelItem => item.AccountType)
-                            </td>
-
-                            <td>
-                                @Html.DisplayFor(modelItem => item.CurrentBalance)
-                            </td>
-
-                            <td>
-                                @Html.DisplayFor(modelItem => item.Owner.FullName)
-                            </td>
-                            <td>
-                                <a asp-controller="BankAccounts" asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-
-        </div>
-    </div>
-    <hr />
-    <h3>Categories</h3>
-    <div class="row">
-        @foreach (var category in Model.Household.Categories.OrderBy(c => c.Id))
-        {
-            <div class="col-4">
-                <h6>@category.Name</h6>
-                <ul>
-                    @foreach (var catItem in category.CategoryItems)
-                    {
-                        <li>@catItem.Name</li>
-                    }
-                    <br />
-                </ul>
-            </div>
-        }
-        <a href="#" data-target="#addCatItem" data-toggle="modal">Add Category Item</a>
-
-
-    </div>
-    <hr />
-    <div class="row">
-        <div class="col">
-            <table class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th>
-                            Transaction Type
-                        </th>
-                        <th>
-                            Memo
-                        </th>
-                        <th>
-                            Amount
-                        </th>
-                        <th>
-                            Bank Account
-                        </th>
-                        <th>
-                            User
-                        </th>
-                        <th>
-                            Category
-                        </th>
-                        <th>
-                            Transaction Date
-                        </th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var trasnaction in Model.HhTransactions)
-                    {
-                        <tr>
-                            <td>
-                                @trasnaction.TransactionType.ToString()
-                            </td>
-                            <td>
-                                @trasnaction.Memo
-                            </td>
-                            <td>
-                                @trasnaction.Amount
-                            </td>
-                            <td>
-                                @trasnaction.BankAccount.Name
-                            </td>
-                            <td>
-                                @trasnaction.FpUser.FullName
-                            </td>
-                            <td>
-                                @trasnaction.CategoryItem.Category.Name / @trasnaction.CategoryItem.Name
-                            </td>
-                            <td>
-                                @trasnaction.Created.ToString("g")
-                            </td>
-                            <td>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <hr />
-    @if (User.IsInRole(nameof(Roles.Head)))
-    {
-        <div>
-            <a href="#" data-target="#invitation" data-toggle="modal">Create Invite</a>
         </div>
     }
-    <div>
-        <a href="#" data-target="#createBank" data-toggle="modal">Create Bank Account</a><br />
-        <a href="#" data-target="#createCat" data-toggle="modal">Create Category</a><br />
 
-        <form asp-controller="HouseHolds" asp-action="Details" class="border">
-            <div class="form-group">
-                <input type="hidden" name="householdId" value="@Model.Household.Id" />
-                <label>Create Transaction For Category</label><br />
-                <select name="categoryId" asp-items="ViewBag.Categories"></select>
-                <input type="submit" class="btn btn-primary" value="Create" />
-            </div>
-        </form>
-    </div>
-</div>
-
-
-@if (User.IsInRole(nameof(Roles.Head)))
-{
-
-    <div class="modal fade" id="invitation" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal fade" id="createBank" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                    <h5 class="modal-title" id="exampleModalLongTitle">Add Bank Account</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form asp-action="Create" asp-controller="Invitations">
+                    <form asp-controller="BankAccounts" asp-action="Create" name="createBank">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <input type="hidden" name="HouseHoldId" value="@Model.Household.Id" />
                         <div class="form-group">
-                            <label class="control-label" for="EmailTo">EmailTo</label>
-                            <input class="form-control" type="email" data-val="true" id="EmailTo" maxlength="50" name="EmailTo" required />
-                            <span class="text-danger field-validation-valid" data-valmsg-for="EmailTo" data-valmsg-replace="true"></span>
+                            <input type="hidden" name="FpUserId" />
+                            <input type="hidden" name="HouseHoldId" value="@Model.Household.Id" />
                         </div>
                         <div class="form-group">
-                            <label class="control-label" for="Subject">Subject</label>
-                            <input class="form-control" type="text" id="Subject" maxlength="150" name="Subject" required />
-                            <span class="text-danger field-validation-valid" data-valmsg-for="Subject" data-valmsg-replace="true"></span>
+                            <label class="control-label">Name</label>
+                            <input type="text" name="Name" class="form-control" required maxlength="50" />
                         </div>
                         <div class="form-group">
-                            <label class="control-label" for="Body">Body</label>
-                            <textarea class="form-control" type="text" id="Body" maxlength="1000" name="Body" required></textarea>
-                            <span class="text-danger field-validation-valid" data-valmsg-for="Body" data-valmsg-replace="true"></span>
+                            <label class="control-label">Account Type</label>
+                            <select name="AccountType" asp-items="Html.GetEnumSelectList<AccountType>()" class="form-control"></select>
                         </div>
                         <div class="form-group">
-                            <label class="control-label" for="Expires">Expires</label>
-                            <input class="form-control" type="date" id="Expires" name="Expires" />
-                            <span class="text-danger field-validation-valid" data-valmsg-for="Expires" data-valmsg-replace="true"></span>
+                            <label class="control-label">Starting Balance</label>
+                            <div class="input-group mb-4">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input name="StartingBalance" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Low Balance Alert Value</label>
+                            <div class="input-group mb-4">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input name="LowBalance" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" class="form-control" />
+                            </div>
                         </div>
                         <div class="form-group">
                             <input type="submit" value="Create" class="btn btn-primary" />
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<div class="modal fade" id="createBank" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form asp-controller="BankAccounts" asp-action="Create" name="createBank">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <div class="form-group">
-                        <input type="hidden" name="FpUserId" />
-                        <input type="hidden" name="HouseHoldId" value="@Model.Household.Id" />
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Name</label>
-                        <input type="text" name="Name" class="form-control" required maxlength="50" />
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Account Type</label>
-                        <select name="AccountType" asp-items="Html.GetEnumSelectList<AccountType>()" class="form-control"></select>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Starting Balance</label>
-                        <input name="StartingBalance" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" required />
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Low Balance Alert Value</label>
-                        <input name="LowBalance" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" class="form-control" />
-                    </div>
-                    <div class="form-group">
-                        <input type="submit" value="Create" class="btn btn-primary" />
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="createCat" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form asp-controller="Categories" asp-action="Create">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <div class="form-group">
-                        <input type="hidden" name="HouseHoldId" value="@Model.Household.Id" />
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Name</label>
-                        <input name="Name" class="form-control" required maxlength="50" />
-                        <span class="text-danger field-validation-valid" data-valmsg-for="Name" data-valmsg-replace="true"></span>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Description</label>
-                        <input name="Description" class="form-control" maxlength="50" required />
-                    </div>
-                    <div class="form-group">
-                        <input type="submit" value="Create" class="btn btn-primary" />
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="addCatItem" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form asp-controller="CategoryItems" asp-action="Create">
-                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                    <div class="form-group">
-                        <input type="hidden" name="householdId" value="@Model.Household.Id" />
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Category</label>
-                        <select name="CategoryId" class="form-control" asp-items="ViewBag.Categories"></select>
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Name</label>
-                        <input name="Name" class="form-control" maxlength="50" required />
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Description</label>
-                        <input name="Description" class="form-control" maxlength="50" required />
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Target Expense</label>
-                        <input name="TargetAmount" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" />
-                    </div>
-                    <div class="form-group">
-                        <input type="submit" value="Create" class="btn btn-primary" />
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-@if (ViewData["CategorySelect"] != null)
-{
-
-    <div class="modal fade" id="createTransaction" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@ViewBag.CategoryName</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <form asp-controller="Transactions" asp-action="Create">
-                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        <div class="form-group">
-                            <label class="control-label">Select Account</label>
-                            <select name="BankAccountId" class="form-control" asp-items="ViewBag.BankAccounts"></select>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label">Category Item</label>
-                            <select name="CategoryItemId" class="form-control" asp-items="ViewBag.CategorySelect"></select>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="control-label">Transaction Type</label>
-                            <select name="TransactionType" asp-items="Html.GetEnumSelectList<TransactionType>()" class="form-control"></select>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label">Memo</label>
-                            <input name="Memo" class="form-control" maxlength="50" />
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label">Amount</label>
-                            <input name="Amount" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" required />
-                        </div>
-                        <div class="form-group">
-                            <input type="submit" value="Create" class="btn btn-primary" />
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
                         </div>
                     </form>
                 </div>
@@ -443,13 +424,384 @@
         </div>
     </div>
 
+    <div class="modal fade" id="transferFunds" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Add Bank Account</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form asp-controller="BankAccounts" asp-action="TransferFunds">
+                        <div class="form-group">
+                            <label class="control-label">Sending Account</label>
+                            <select name="sendingAccountId" class="form-control" asp-items="ViewBag.BankAccounts"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Receiving Account</label>
+                            <select name="receivingAccountId" class="form-control" asp-items="ViewBag.BankAccounts"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Transfer Amount</label>
+                            <div class="input-group mb-4">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input name="amount" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" class="btn btn-primary" value="Submit" />
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="createCat" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Create Category</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form asp-controller="Categories" asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <input type="hidden" name="HouseHoldId" value="@Model.Household.Id" />
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Name</label>
+                            <input name="Name" class="form-control" required maxlength="50" />
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Description</label>
+                            <input name="Description" class="form-control" maxlength="50" required />
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Create" class="btn btn-primary" />
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addCatItem" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Add Category Item</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form asp-controller="CategoryItems" asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        <div class="form-group">
+                            <input type="hidden" name="householdId" value="@Model.Household.Id" />
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Category</label>
+                            <select name="CategoryId" class="form-control" asp-items="ViewBag.AllCategories"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Name</label>
+                            <input name="Name" class="form-control" maxlength="50" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Description</label>
+                            <input name="Description" class="form-control" maxlength="50" required />
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Target Expense</label>
+                            <div class="input-group mb-4">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input name="TargetAmount" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" value="Create" class="btn btn-primary" />
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="leaveHousehold" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Leave Household</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        You are about leave @Model.Household.Name and delete all your attached bank accounts. Are you sure?
+                    </p>
+                    <form id="leaveForm" asp-controller="HouseHolds" asp-action="LeaveHousehold" method="post">
+                        <input type="submit" class="btn btn-danger" value="Leave" />
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="removeMember" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Remove Member</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Select user to remove from your household.
+                        All bank accounts belonging to the user will be deleted. <br />
+                        (Heads of Household can not be removed)
+                    </p>
+                    <form asp-controller="HouseHolds" asp-action="RemoveMember" method="post">
+                        <div class="form-group">
+                            <label class="control-label">Members</label>
+                            <select name="memberId" class="form-control" asp-items="ViewBag.NonHeads"></select>
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" class="btn btn-danger" value="Remove" />
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="promoteHoh" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Promote Member</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form asp-controller="HouseHolds" asp-action="PromoteMember" method="post">
+                        <div class="form-group">
+                            <label class="control-label">Members</label>
+                            <select name="memberId" class="form-control" asp-items="ViewBag.NonHeads"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Step Down From Head of Household?</label>
+                            <input type="checkbox" class="checkbox-outline-secondary" name="stepDown" value="true" />
+                        </div>
+                        <div class="form-group">
+                            <input type="submit" class="btn btn-primary" value="Promote" />
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="stepDown" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Step Down From Head of Household</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        You are about to step down from head of household. Are you sure?
+                        (Can only step down if there is another head of household in place)
+                    </p>
+                    <form asp-controller="HouseHolds" asp-action="StepDown" method="post">
+                        <div class="form-group">
+                            <input type="submit" class="btn btn-primary" value="Step Down" />
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="resetData" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Reset Category Spending Data</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form asp-controller="CategoryItems" asp-action="ResetData" method="post">
+                        <div class="form-group">
+                            <p>
+                                You are about to reset all the actual amounts for each category item. Are you sure?
+                                (Target amounts will remain.)
+                            </p>
+                            <input type="submit" class="btn btn-primary" value="Reset Data" />
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editCategory" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Edit Category</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Select category to edit along with all its items. The category "Deposits" can not
+                        be deleted or renamed.
+                    </p>
+                    <form id="leaveForm" asp-controller="Categories" asp-action="Edit" method="get">
+                        <select name="id" class="form-control mb-3" asp-items="ViewBag.AllCategories"></select>
+                        <input type="submit" value="Edit Category" class="btn btn-primary" />
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewData["CategorySelect"] != null)
+    {
+
+        <div class="modal fade" id="createTransaction" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@ViewBag.CategoryName</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form asp-controller="Transactions" asp-action="Create">
+                            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                            <div class="form-group">
+                                <label class="control-label">Select Account</label>
+                                <select name="BankAccountId" class="form-control" asp-items="ViewBag.BankAccounts"></select>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Category Item</label>
+                                <select name="CategoryItemId" class="form-control" asp-items="ViewBag.CategorySelect"></select>
+                            </div>                          
+                            <div class="form-group">
+                                <label class="control-label">Memo</label>
+                                <input name="Memo" class="form-control" maxlength="50" />
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">Amount</label>
+                                <div class="input-group mb-4">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                    <input name="Amount" class="form-control" pattern="^[+-]?[0-9]{1,3}(?:,?[0-9]{3})*(?:\.[0-9]{2})?$" title="US Currency" maxlength="8" required />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <input type="submit" value="Create" class="btn btn-primary" />
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+    }
+    <div style="position: absolute; top: 1%; right: 1%;z-index: 9999;">
+        <div id="hasNotifications" class="toast toast-secondary fade hide" role="alert" data-delay="6000" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header toast-header-secondary">
+                <strong class="mr-auto">Alert</strong>
+                <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="toast-body">
+                <p>
+                    You have unread notifications.
+                </p>
+                <form asp-controller="Notifications" asp-action="MarkAllRead">
+                    <input type="submit" class="btn btn-danger btn-sm" value="Mark As Read" />
+                </form>
+            </div>
+        </div>
+    </div>
 
 
     @section Scripts{
-        <script>
-            $(document).ready(function () {
-                $('#createTransaction').modal('show');
-            })
-        </script>
+
+        @if (ViewData["CategorySelect"] != null)
+        {
+            <script>
+                $(document).ready(function () {
+                    $('#createTransaction').modal('show');
+                })
+            </script>
+        }
+
+
+        @if (Model.HasNotifcations)
+        {
+            <script>
+                $(document).ready(function () {
+                    $('#hasNotifications').toast('show');
+                })
+            </script>
+        }
+
+        @if (TempData["RemoveMembers"] != null)
+        {
+            <script>
+                $(document).ready(function () {
+                    Swal.fire(
+                        "Sorry",
+                        "@TempData["RemoveMembers"]",
+                        "error"
+                )});
+            </script>
+        }
+
     }
-}
+
+
+
+
+</div>

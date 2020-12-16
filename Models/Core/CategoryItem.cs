@@ -28,6 +28,8 @@ namespace FinancialPortalProject.Models.Core
         [Column(TypeName = "decimal(9, 2)")]
         public decimal ActualAmount { get; set; }
 
+        public bool IsDeleted { get; set; }
+
         public Category Category { get; set; }
 
         public virtual ICollection<Transaction> Transactions { get; set; } = new HashSet<Transaction>();

@@ -129,12 +129,12 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
                     user.ImageName = Input.Avatar.FileName;
                     user.ImageData = await _fileService.ConvertFileToByteArrayAsync(Input.Avatar);
                 }
-                else
-                {
-                    var image = _configuration.GetSection("AdminSettings")["ImageName"];
-                    user.ImageData = await _fileService.AssignDefaultAvatarAsync(image);
-                    user.ImageName = image;
-                }
+                //else
+                //{
+                //    var image = _configuration.GetSection("AdminSettings")["ImageName"];
+                //    user.ImageData = await _fileService.AssignDefaultAvatarAsync(image);
+                //    user.ImageName = image;
+                //}
                 var result = await _userManager.CreateAsync(user, Input.Password);
                 if (result.Succeeded && string.IsNullOrEmpty(Input.Code))
                 {

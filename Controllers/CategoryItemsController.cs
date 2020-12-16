@@ -7,16 +7,20 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FinancialPortalProject.Data;
 using FinancialPortalProject.Models.Core;
+using Microsoft.AspNetCore.Identity;
+using FinancialPortalProject.Models;
 
 namespace FinancialPortalProject.Controllers
 {
     public class CategoryItemsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<FpUser> _userManager;
 
-        public CategoryItemsController(ApplicationDbContext context)
+        public CategoryItemsController(ApplicationDbContext context, UserManager<FpUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: CategoryItems
@@ -116,10 +120,8 @@ namespace FinancialPortalProject.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Description", categoryItem.CategoryId);
-            return View(categoryItem);
+            return RedirectToAction("Edit", "Categories", new { id = categoryItem.CategoryId });
         }
 
         // GET: CategoryItems/Delete/5
@@ -155,6 +157,22 @@ namespace FinancialPortalProject.Controllers
         private bool CategoryItemExists(int id)
         {
             return _context.CategoryItems.Any(e => e.Id == id);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetData()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var categoryItems = await _context.Categories
+                .Where(c => c.HouseHoldId == user.HouseHoldId && c.IsDeleted == false)
+                .SelectMany(c => c.CategoryItems).ToListAsync();
+            foreach (var item in categoryItems)
+            {
+                item.ActualAmount = 0;
+            }
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Details", "HouseHolds", new { id = user.HouseHoldId });
         }
     }
 }

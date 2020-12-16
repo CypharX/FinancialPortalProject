@@ -7,16 +7,21 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FinancialPortalProject.Data;
 using FinancialPortalProject.Models.Core;
+using Microsoft.AspNetCore.Identity;
+using FinancialPortalProject.Models;
+using FinancialPortalProject.Enums;
 
 namespace FinancialPortalProject.Controllers
 {
     public class NotificationsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<FpUser> _userManager;
 
-        public NotificationsController(ApplicationDbContext context)
+        public NotificationsController(ApplicationDbContext context, UserManager<FpUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Notifications
@@ -155,6 +160,29 @@ namespace FinancialPortalProject.Controllers
         private bool NotificationExists(int id)
         {
             return _context.Notifications.Any(e => e.Id == id);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAllRead()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var notifications = new List<Notification>();
+            if(User.IsInRole(nameof(Roles.Head)))
+            {
+                notifications = await _context.Notifications.Where(n => n.HouseHoldId == user.HouseHoldId).ToListAsync();
+            }
+            else
+            {
+                notifications = await _context.Notifications.Where(n => n.FpUserId == user.Id).ToListAsync();
+            }
+            foreach (var notificaiton in notifications)
+            {
+                notificaiton.IsRead = true;
+            }
+            await _context.SaveChangesAsync();
+            TempData["MarkAllRead"] = "All your notifications have been marked as read!";
+            return RedirectToAction("Details", "HouseHolds", new { id = user.HouseHoldId });
         }
     }
 }

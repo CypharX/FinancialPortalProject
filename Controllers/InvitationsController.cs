@@ -109,8 +109,18 @@ namespace FinancialPortalProject.Controllers
             {
                 if(User.Identity.IsAuthenticated)
                 {
-                    var household = await _context.HouseHolds.FirstOrDefaultAsync(hh => hh.Id == invitation.HouseHoldId);
                     var user = await _userManager.GetUserAsync(User);
+                    if(user.Email.ToLower() != invitation.EmailTo.ToLower())
+                    {
+                        TempData["InviteFailed"] = "Your invitation can not be accepted with your email address";
+                        return RedirectToAction("InviteFailed", "Invitations");
+                    }
+                    if(user.HouseHoldId != null)
+                    {
+                        TempData["InviteFailed"] = "You may only be in one household at a time.";
+                        return RedirectToAction("InviteFailed", "Invitations");
+                    }
+                    var household = await _context.HouseHolds.FirstOrDefaultAsync(hh => hh.Id == invitation.HouseHoldId);
                     invitation.Accepted = true;
                     household.Members.Add(user);
                     await _userManager.AddToRoleAsync(user, Roles.Member.ToString());
