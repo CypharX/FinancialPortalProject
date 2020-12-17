@@ -1,0 +1,147 @@
+﻿@model FinancialPortalProject.Models.Core.HouseHold
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<div class="layout-px-spacing">
+    <div class="page-header">
+        <div class="page-title">
+            <h2>@Model.Name</h2>
+            <h4>@Model.Greeting</h4>
+            <h6>Est: @Model.Established?.ToString("MMM dd yyyy")</h6>
+        </div>
+        <nav class="breadcrumb-one" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></a></li>
+                <li class="breadcrumb-item active">Analytics</li>
+            </ol>
+        </nav>
+    </div>
+    <div class="row sales layout-top-spacing">
+        <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12 col-12 layout-spacing">
+            <div class="widget widget-chart-two h-100">
+                <div class="widget-heading">
+                    <h5 class="">Account Balance Total per Member</h5>
+                </div>
+                <div class="widget-content d-flex flex-column">
+                    <canvas id="dollarsPerMember" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12 col-12 layout-spacing">
+            <div class="widget widget-chart-two h-100">
+                <div class="widget-heading">
+                    <h5 class="">Amount Spent per Member</h5>
+                </div>
+                <div class="widget-content d-flex flex-column">
+                    <canvas id="transactionPerMember" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-lg-12 col-md-12 col-sm-12 col-12 layout-spacing">
+            <div class="widget widget-chart-two h-100">
+                <div class="widget-heading">
+                    <h5 class="">Amount Spent per Category</h5>
+                </div>
+                <div class="widget-content d-flex flex-column">
+                    <canvas id="transactionPerCategory" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        var Url = '@Url.Action("MoneyPerMember", "Charts")';
+        var Url2 = '@Url.Action("TransactionsPerMember", "Charts")';
+        var Url3 = '@Url.Action("TransactionsPerCategory", "Charts")';
+
+        $.post(Url).then(function (response) {
+            var moneyPerMember = $('#dollarsPerMember').get(0).getContext('2d')
+            var donutData = {
+                labels: response.labels,
+                datasets: [
+                    {
+                        data: response.data,
+                        backgroundColor: response.backgroundColor,
+                    }
+                ]
+            }
+            var donutOptions = {
+                maintainAspectRatio: false,
+                responsive: true,
+                legend: {
+                    labels: {
+                        fontColor: '#ffffff'
+                    }
+                }
+            }
+            var donutChart = new Chart(moneyPerMember, {
+                type: 'doughnut',
+                data: donutData,
+                options: donutOptions,
+            })
+
+        });
+
+        $.post(Url2).then(function (response) {
+            var transactionsPerMember = $('#transactionPerMember').get(0).getContext('2d')
+            var donutData = {
+                labels: response.labels,
+                datasets: [
+                    {
+                        data: response.data,
+                        backgroundColor: response.backgroundColor,
+                    }
+                ]
+            }
+            var donutOptions = {
+                maintainAspectRatio: false,
+                responsive: true,
+                legend: {
+                    labels: {
+                        fontColor: '#ffffff'
+                    }
+                }
+            }
+            var donutChart = new Chart(transactionsPerMember, {
+                type: 'doughnut',
+                data: donutData,
+                options: donutOptions,
+            })
+        });
+
+        $.post(Url3).then(function (response) {
+            var transactionsPerCategory = $('#transactionPerCategory').get(0).getContext('2d')
+            var donutData = {
+                labels: response.labels,
+                datasets: [
+                    {
+                        data: response.data,
+                        backgroundColor: response.backgroundColor,
+                    }
+                ]
+            }
+            var donutOptions = {
+                maintainAspectRatio: false,
+                responsive: true,
+                legend: {
+                    labels: {
+                        fontColor: '#ffffff'
+                    }
+                }
+            }
+            var donutChart = new Chart(transactionsPerCategory, {
+                type: 'doughnut',
+                data: donutData,
+                options: donutOptions,
+            })
+        });
+    </script>
+}

@@ -11,9 +11,11 @@ using Microsoft.AspNetCore.Identity;
 using FinancialPortalProject.Models;
 using FinancialPortalProject.Enums;
 using FinancialPortalProject.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FinancialPortalProject.Controllers
 {
+    [Authorize]
     public class BankAccountsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -25,41 +27,6 @@ namespace FinancialPortalProject.Controllers
             _context = context;
             _userManager = userManager;
             _notifcationService = notifcationService;
-        }
-
-        // GET: BankAccounts
-        public async Task<IActionResult> Index()
-        {
-            var applicationDbContext = _context.BankAccounts.Include(b => b.HouseHold).Include(b => b.Owner);
-            return View(await applicationDbContext.ToListAsync());
-        }
-
-        // GET: BankAccounts/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var bankAccount = await _context.BankAccounts
-                .Include(b => b.HouseHold)
-                .Include(b => b.Owner)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (bankAccount == null)
-            {
-                return NotFound();
-            }
-
-            return View(bankAccount);
-        }
-
-        // GET: BankAccounts/Create
-        public IActionResult Create()
-        {
-            ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name");
-            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "FullName");
-            return View();
         }
 
         // POST: BankAccounts/Create
@@ -75,11 +42,11 @@ namespace FinancialPortalProject.Controllers
                 bankAccount.CurrentBalance = bankAccount.StartingBalance;                
                 _context.Add(bankAccount);
                 await _context.SaveChangesAsync();
+                TempData["Success"] = "Your bank account has been created";
                 return RedirectToAction("Details", "HouseHolds", new { id = bankAccount.HouseHoldId});
             }
-            ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", bankAccount.HouseHoldId);
-            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "FullName", bankAccount.OwnerId);
-            return View(bankAccount);
+            TempData["Error"] = "Error occurred creating your bank account";          
+            return RedirectToAction("Index", "Home");
         }
 
         // GET: BankAccounts/Edit/5
@@ -222,6 +189,7 @@ namespace FinancialPortalProject.Controllers
             await _context.SaveChangesAsync();
 
             await _notifcationService.NotifyAsync(outTransaction, sendingAccount);
+            TempData["Success"] = "You funds have been transfered";
             return RedirectToAction("Details", "HouseHolds", new { id = user.HouseHoldId });
         }
     }

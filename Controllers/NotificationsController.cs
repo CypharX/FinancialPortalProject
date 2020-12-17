@@ -10,9 +10,12 @@ using FinancialPortalProject.Models.Core;
 using Microsoft.AspNetCore.Identity;
 using FinancialPortalProject.Models;
 using FinancialPortalProject.Enums;
+using FinancialPortalProject.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FinancialPortalProject.Controllers
 {
+    [Authorize]
     public class NotificationsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -27,8 +30,33 @@ namespace FinancialPortalProject.Controllers
         // GET: Notifications
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Notifications.Include(n => n.HouseHold);
-            return View(await applicationDbContext.ToListAsync());
+            var vm = new NotificationsIndexVm();
+            var user = await _userManager.GetUserAsync(User);
+            if(user.HouseHoldId == null)
+            {
+                TempData["Warning"] = "You must be in a household to receive notifications";
+                return RedirectToAction("Index", "Home");
+            }
+            if(User.IsInRole(nameof(Roles.Head)))
+            {
+                vm.NewNotifications = await _context.Notifications
+                    .Include(n => n.FpUser)
+                    .Where(n => n.HouseHoldId == user.HouseHoldId && n.IsRead == false).ToListAsync();
+                vm.OldNotifications = await _context.Notifications
+                    .Include(n => n.FpUser)
+                    .Where(n => n.HouseHoldId == user.HouseHoldId && n.IsRead == true).ToListAsync();
+            }
+            else
+            {
+                vm.NewNotifications = await _context.Notifications
+                    .Include(n => n.FpUser)
+                    .Where(n => n.FpUserId == user.Id && n.IsRead == false).ToListAsync();
+                vm.OldNotifications = await _context.Notifications
+                   .Include(n => n.FpUser)
+                   .Where(n => n.FpUserId == user.Id && n.IsRead == true).ToListAsync();
+            }
+            vm.Household = await _context.HouseHolds.FindAsync(user.HouseHoldId);
+            return View(vm);
         }
 
         // GET: Notifications/Details/5
@@ -70,7 +98,6 @@ namespace FinancialPortalProject.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", notification.HouseHoldId);
             return View(notification);
         }
 
@@ -147,14 +174,35 @@ namespace FinancialPortalProject.Controllers
         }
 
         // POST: Notifications/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var notification = await _context.Notifications.FindAsync(id);
             _context.Notifications.Remove(notification);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            TempData["Error"] = "Your notification has been deleted";
+            return RedirectToAction("Index", "Notifications");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkRead(int id)
+        {
+            var notification = await _context.Notifications.FindAsync(id);
+            notification.IsRead = true;
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index", "Notifications");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkUnread(int id)
+        {
+            var notification = await _context.Notifications.FindAsync(id);
+            notification.IsRead = false;
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index", "Notifications");
         }
 
         private bool NotificationExists(int id)
@@ -181,7 +229,7 @@ namespace FinancialPortalProject.Controllers
                 notificaiton.IsRead = true;
             }
             await _context.SaveChangesAsync();
-            TempData["MarkAllRead"] = "All your notifications have been marked as read!";
+            TempData["Alert"] = "All your notifications have been marked as read!";
             return RedirectToAction("Details", "HouseHolds", new { id = user.HouseHoldId });
         }
     }

@@ -80,9 +80,10 @@ namespace FinancialPortalProject.Controllers
                 var emailBody = $"{invitation.Body} <br /> Register and accept by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>" +
                                  $" or if already registered you can log in and use the following code <br /> Invitation Code: {invitation.Code}";
                 await _emailSender.SendEmailAsync(invitation.EmailTo, invitation.Subject, emailBody);
+                TempData["Success"] = $"Your invitation to {invitation.EmailTo} has been sent.";
                 return RedirectToAction("Details", "HouseHolds", new { id = invitation.HouseHoldId});
             }
-            ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", invitation.HouseHoldId);
+            TempData["Error"] = "Your invitation could not be sent";
             return View(invitation);
         }
 

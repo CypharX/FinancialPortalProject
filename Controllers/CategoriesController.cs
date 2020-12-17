@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using FinancialPortalProject.Data;
 using FinancialPortalProject.Models.Core;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FinancialPortalProject.Controllers
 {
+    [Authorize]
     public class CategoriesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -65,8 +67,8 @@ namespace FinancialPortalProject.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Details", "HouseHolds", new { id = category.HouseHoldId});
             }
-            ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", category.HouseHoldId);
-            return View(category);
+            TempData["Error"] = "Error creating your category";
+            return RedirectToAction("Index", "Home");
         }
 
         // GET: Categories/Edit/5
@@ -82,7 +84,7 @@ namespace FinancialPortalProject.Controllers
             {
                 return NotFound();
             }
-            ViewData["HouseHoldId"] = new SelectList(_context.HouseHolds, "Id", "Name", category.HouseHoldId);
+
             return View(category);
         }
 

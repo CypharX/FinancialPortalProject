@@ -1,59 +1,184 @@
-﻿@model IEnumerable<FinancialPortalProject.Models.Core.Notification>
+﻿@model FinancialPortalProject.Models.ViewModels.NotificationsIndexVm
+@using FinancialPortalProject.Enums
 
-@{
-    ViewData["Title"] = "Index";
+
+
+<div class="layout-px-spacing">
+    <div class="page-header">
+        <div class="page-title">
+            <h2>@Model.Household.Name</h2>
+            <h4>@Model.Household.Greeting</h4>
+            <h6>Est: @Model.Household.Established?.ToString("MMM dd yyyy")</h6>
+        </div>
+        <nav class="breadcrumb-one" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></a></li>
+                <li class="breadcrumb-item active" aria-current="page">Notifications</li>
+            </ol>
+        </nav>
+    </div>
+
+    @if (Model.NewNotifications.Count() > 0)
+    {
+        <div class="row">
+            <div class="col-lg-12 layout-spacing layout-top-spacing">
+                <div class="statbox widget box box-shadow">
+                    <div class="row" style="background-color: #0e1726">
+                        <div class="widget-header">
+                            <div class="col-xl-12 col-md-12 col-sm-12 col-12">
+                                <h4>New Notifications</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="background-color: #0e1726">
+                        @foreach (var notification in Model.NewNotifications)
+                        {
+                            <div class="col-3 mb-4">
+                                <div class="card component-card_1 h-100">
+                                    <div class="card-body">
+                                        <div class="mb-5">
+                                            <h5 class="card-title">@notification.Subject</h5>
+                                            <p class="card-text text-teal">@notification.Body</p>
+                                        </div>
+                                        <div class="mt-5 ml-4 mb-2 fixed-bottom position-absolute">
+                                            <div class="d-flex flex-row">
+                                                <p class="card-text mb-0">@notification.FpUser.FullName</p>
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p class="card-text">@notification.Created.ToString("MM/dd/yyyy")</p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-5 ml-4 mb-2 fixed-bottom position-absolute">
+
+                                            <div class="d-flex flex-row-reverse">
+                                                <a href="javascript:document.getElementById('markRead-@notification.Id').submit()" class="btn btn-secondary btn-sm" style="width:7.5rem">Mark as Read</a>
+                                            </div>
+                                            <div class="d-flex flex-row-reverse mt-1">
+                                                <a data-target="#delete-@notification.Id" data-toggle="modal" class="btn btn-danger btn-sm" style="width:7.5rem">Delete</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <form id="markRead-@notification.Id" asp-controller="Notifications" asp-action="MarkRead" asp-route-id="@notification.Id"></form>
+                        }
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.OldNotifications.Count() > 0)
+    {
+        <div class="row">
+            <div class="col-lg-12 layout-spacing layout-top-spacing">
+                <div class="statbox widget box box-shadow">
+                    <div class="row" style="background-color: #0e1726">
+                        <div class="widget-header">
+                            <div class="col-xl-12 col-md-12 col-sm-12 col-12">
+                                <h4>Read Notifications</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="background-color: #0e1726">
+                        @foreach (var notification in Model.OldNotifications)
+                        {
+                            <div class="col-3 mb-4">
+                                <div class="card component-card_1 h-100">
+                                    <div class="card-body">
+                                        <div class="mb-5">
+                                            <h5 class="card-title">@notification.Subject</h5>
+                                            <p class="card-text text-teal">@notification.Body</p>
+                                        </div>
+                                        <div class="mt-5 ml-4 mb-2 fixed-bottom position-absolute">
+                                            <div class="d-flex flex-row">
+                                                <p class="card-text mb-0">@notification.FpUser.FullName</p>
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <p class="card-text">@notification.Created.ToString("MM/dd/yyyy")</p>
+                                            </div>
+                                        </div>
+                                        <div class="mt-5 ml-4 mb-2 fixed-bottom position-absolute">
+
+                                            <div class="d-flex flex-row-reverse">
+                                                <a href="javascript:document.getElementById('markNew-@notification.Id').submit()" class="btn btn-secondary btn-sm" style="width:7.5rem">Mark as New</a>
+                                            </div>
+                                            <div class="d-flex flex-row-reverse mt-1">
+                                                <a data-target="#delete-@notification.Id" data-toggle="modal" class="btn btn-danger btn-sm" style="width:7.5rem">Delete</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <form id="markNew-@notification.Id" asp-controller="Notifications" asp-action="MarkUnread" asp-route-id="@notification.Id"></form>
+                        }
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    }
+    @if(Model.OldNotifications.Count() == 0 && Model.NewNotifications.Count() == 0)
+    {
+        <h3>
+            You have no notifications.
+        </h3>
+    }
+</div>
+
+
+
+@foreach (var notification in Model.NewNotifications)
+{
+    <div class="modal fade" id="delete-@notification.Id" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Delete Notification</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Are you sure you want to delete this notification?
+                    </p>
+                    <form asp-action="Delete" asp-controller="Notifications" asp-route-id="@notification.Id">
+                        <input type="submit" value="Delete" class="btn btn-danger" />
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
-<h1>Index</h1>
-
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Created)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Subject)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Body)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsRead)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.HouseHold)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Created)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Subject)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Body)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsRead)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.HouseHold.Name)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+@foreach (var notification in Model.OldNotifications)
+{
+    <div class="modal fade" id="delete-@notification.Id" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Delete Notification</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Are you sure you want to delete this notification?
+                    </p>
+                    <form asp-action="Delete" asp-controller="Notifications" asp-route-id="@notification.Id">
+                        <input type="submit" value="Delete" class="btn btn-danger" />
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close">Close</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 }
-    </tbody>
-</table>

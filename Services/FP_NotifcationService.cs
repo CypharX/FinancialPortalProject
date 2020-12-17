@@ -37,7 +37,7 @@ namespace FinancialPortalProject.Services
                
                 notification.Created = DateTime.Now;
                 notification.HouseHoldId = account.HouseHoldId;
-                notification.FpUserId = account.OwnerId;
+                notification.FpUserId = user.Id;
                 notification.Subject = $"Your account {account.Name} has been overdrafted";
                 notification.Body = $"{user.FullName} has overdrafted the account {account.Name} on {transaction.Created:MMM dd yyyy} with a purchase of {formattedTransaction}";
                
@@ -46,7 +46,7 @@ namespace FinancialPortalProject.Services
             {
                 notification.Created = DateTime.Now;
                 notification.HouseHoldId = account.HouseHoldId;
-                notification.FpUserId = account.OwnerId;
+                notification.FpUserId = user.Id;
                 notification.Subject = $"Your account {account.Name} has been fallen below your low balance alert";
                 notification.Body = $"{user.FullName} has made a transaction on {transaction.Created:MMM dd yyyy} in the amount of {formattedTransaction} lowering your account balance to {formattedBalance} which is below your low balance alert";                             
             }

@@ -1,10 +1,29 @@
-﻿<div class="row">
-    <div class="col">
-        <h3>
-            Welcome to your financial portal. You currently are not assigned to a household.
-            You can create one <a asp-controller="HouseHolds" asp-action="Create">here</a> or join one you've been invited to by entering your
-            invitation code <a href="#" data-toggle="modal" data-target="#joinWithCode">here</a>.
-        </h3>
+﻿@*<div class="row">
+        <div class="col">
+            <h3>
+                Welcome to your financial portal. You currently are not assigned to a household.
+                You can create one <a href="#" data-target="#createHouse" data-toggle="modal">here</a> or join one you've been invited to by entering your
+                invitation code <a href="#" data-toggle="modal" data-target="#joinWithCode">here</a>.
+            </h3>
+        </div>
+    </div>*@
+
+<div class="layout-px-spacing">
+    <div class="page-header">
+        <div class="page-title">
+            <h2>Welcome to the Family Futures Finance Application </h2>          
+        </div>      
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col">
+            <h4>
+                To get started using this application you must be in a household. You can create a new household or
+                join an existing household with an invitation code.
+            </h4>
+            <a href="#" class="btn btn-primary mt-2" data-target="#createHouse" data-toggle="modal">Create Household</a>
+            <a href="#" class="btn btn-secondary mt-2" data-target="#joinWithCode" data-toggle="modal">Join With Code</a>
+        </div>
     </div>
 </div>
 
@@ -12,7 +31,7 @@
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
+                <h5 class="modal-title" id="exampleModalLongTitle">Enter Invite Code</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -20,11 +39,41 @@
             <div class="modal-body">
                 <form asp-action="AcceptInvitation" asp-controller="Invitations">
                     <input type="hidden" name="email" value="@User.Identity.Name" />
-                    <input name="code" class="form-control" />
-                    <input type="submit" class="btn btn-primary" value="submit" />
+                    <input name="code" class="form-control" required maxlength="36" />
+                    <input type="submit" class="btn btn-primary mt-3" value="Submit" />
                 </form>
             </div>
-           
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createHouse" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLongTitle">Create Household</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form asp-action="Create" asp-controller="HouseHolds">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    <div class="form-group">
+                        <label class="control-label">Household Name</label>
+                        <input name="Name" class="form-control" required maxlength="50" />
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Greeting</label>
+                        <input name="Greeting" class="form-control" required maxlength="100" />
+                    </div>
+                    <div class="form-group">
+                        <input type="submit" value="Create" class="btn btn-primary" />
+                    </div>
+                </form>
+            </div>
+
         </div>
     </div>
 </div>

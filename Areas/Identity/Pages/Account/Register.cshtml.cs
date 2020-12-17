@@ -153,7 +153,9 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account
 
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
-                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
+                        TempData["PleaseConfirm"] = $"Your email {Input.Email} has been registered. Please check your email and confirm before logging in.";
+                            
+                        return RedirectToPage("/Account/Login", new { area = "Identity" });
                     }
                     else
                     {

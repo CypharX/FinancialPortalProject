@@ -11,9 +11,11 @@ using Microsoft.AspNetCore.Identity;
 using FinancialPortalProject.Models;
 using FinancialPortalProject.Enums;
 using FinancialPortalProject.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FinancialPortalProject.Controllers
 {
+    [Authorize]
     public class HouseHoldsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -120,7 +122,7 @@ namespace FinancialPortalProject.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Greeting,Established")] HouseHold houseHold)
+        public async Task<IActionResult> Create([Bind("Name,Greeting")] HouseHold houseHold)
         {
             if (ModelState.IsValid)
             {
@@ -166,19 +168,16 @@ namespace FinancialPortalProject.Controllers
         }
 
         // GET: HouseHolds/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public async Task<IActionResult> Analytics()
         {
-            if (id == null)
+            var user = await _userManager.GetUserAsync(User);
+            if (user.HouseHoldId == null)
             {
-                return NotFound();
+                TempData["Warning"] = "You must be in a household to view data";
+                return RedirectToAction("Index", "Home");
             }
-
-            var houseHold = await _context.HouseHolds.FindAsync(id);
-            if (houseHold == null)
-            {
-                return NotFound();
-            }
-            return View(houseHold);
+            var household = await _context.HouseHolds.FindAsync(user.HouseHoldId);
+            return View(household);
         }
 
         // POST: HouseHolds/Edit/5
@@ -305,6 +304,7 @@ namespace FinancialPortalProject.Controllers
                 account.IsDeleted = true;
             }
             await _context.SaveChangesAsync();
+            TempData["Success"] = $"{member.FullName} has been successfully removed from your household";
             return RedirectToAction("Index", "Home");
         }
 

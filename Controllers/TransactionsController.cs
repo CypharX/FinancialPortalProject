@@ -11,9 +11,11 @@ using FinancialPortalProject.Enums;
 using Microsoft.AspNetCore.Identity;
 using FinancialPortalProject.Models;
 using FinancialPortalProject.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FinancialPortalProject.Controllers
 {
+    [Authorize]
     public class TransactionsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -102,10 +104,8 @@ namespace FinancialPortalProject.Controllers
                 await _notifcationService.NotifyAsync(transaction, bankAccount);
                 return RedirectToAction("Details", "HouseHolds", new { id = bankAccount.HouseHoldId});
             }
-            ViewData["BankAccountId"] = new SelectList(_context.BankAccounts, "Id", "Name", transaction.BankAccountId);
-            ViewData["CategoryItemId"] = new SelectList(_context.CategoryItems, "Id", "Description", transaction.CategoryItemId);
-            ViewData["FpUserId"] = new SelectList(_context.Users, "Id", "Id", transaction.FpUserId);
-            return View(transaction);
+            TempData["Error"] = "Error creating your transaction";
+            return RedirectToAction("Index", "Home");
         }
 
         // GET: Transactions/Edit/5
