@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using FinancialPortalProject.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FinancialPortalProject.Controllers
 {
@@ -35,15 +36,13 @@ namespace FinancialPortalProject.Controllers
             return View();
         }
 
+        [Authorize]
         public IActionResult Lobby()
         {
             return View();
         }
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+       
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

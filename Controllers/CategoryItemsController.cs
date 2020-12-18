@@ -149,9 +149,9 @@ namespace FinancialPortalProject.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var categoryItem = await _context.CategoryItems.FindAsync(id);
-            _context.CategoryItems.Remove(categoryItem);
+            categoryItem.IsDeleted = true;
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Edit", "Categories", new { id = categoryItem.CategoryId});
         }
 
         private bool CategoryItemExists(int id)

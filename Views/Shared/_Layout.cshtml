@@ -24,7 +24,7 @@
     <link href="~/css/loader.css" rel="stylesheet" />
     <script src="~/js/loader.js"></script>
     <!-- BEGIN GLOBAL MANDATORY STYLES -->
-    <link href="https://fonts.googleapis.com/css?family=Quicksand:400,500,600,700&display=swap" rel="stylesheet">
+    <link href="//fonts.googleapis.com/css?family=Quicksand:400,500,600,700&display=swap" rel="stylesheet">
     <link href="~/css/bootstrap.min.css" rel="stylesheet" />
     <link href="~/css/plugins.css" rel="stylesheet" />
     <!-- END GLOBAL MANDATORY STYLES -->
@@ -105,7 +105,7 @@
                         <div class="dropdown-menu position-absolute animated fadeInUp" aria-labelledby="user-profile-dropdown">
                             <div class="">
                                 <div class="dropdown-item">
-                                    <a class="" href="user_profile.html"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> My Profile</a>
+                                    <a asp-area="Identity" asp-page="/Account/Manage/Index"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-user"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> My Profile</a>
                                 </div>
                                 <div class="dropdown-item">
                                     <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Page("/Account/Login", new { area = "Identity" })">
@@ -131,16 +131,16 @@
         <!--  BEGIN TOPBAR  -->
         <div class="topbar-nav header navbar" role="banner">
             <nav id="topbar">
-                <ul class="navbar-nav theme-brand flex-row  text-center">
+                @*<ul class="navbar-nav theme-brand flex-row  text-center">
                     <li class="nav-item theme-logo">
-                        <a href="index.html">
-                            <img src="~/TempImg/90x90.jpg" class="navbar-logo" alt="logo">
+                        <a href="#">
+                            <img src="~/Img/family.png" class="navbar-logo" alt="logo">
                         </a>
                     </li>
                     <li class="nav-item theme-text">
-                        <a href="index.html" class="nav-link"> CORK </a>
+                        <a href="index.html" class="nav-link"> Family Futures </a>
                     </li>
-                </ul>
+                </ul>*@
 
                 <ul class="list-unstyled menu-categories" id="topAccordion">
 

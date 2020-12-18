@@ -28,6 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="wwwroot\Img\family.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Update="wwwroot\Img\silhouette.jpeg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

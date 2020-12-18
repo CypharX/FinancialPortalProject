@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using FinancialPortalProject.Data;
 using FinancialPortalProject.Models.Core;
 using Microsoft.AspNetCore.Authorization;
+using FinancialPortalProject.Enums;
 
 namespace FinancialPortalProject.Controllers
 {
@@ -77,14 +78,17 @@ namespace FinancialPortalProject.Controllers
             if (id == null)
             {
                 return NotFound();
-            }
-
-            var category = await _context.Categories.Include(c => c.CategoryItems).FirstOrDefaultAsync(c => c.Id == id);
+            }         
+            var category = await _context.Categories.Include(c => c.CategoryItems).FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
             if (category == null)
             {
                 return NotFound();
             }
-
+            if (User.IsInRole(nameof(Roles.Member)))
+            {
+                TempData["Error"] = "Members do not have access to this page";
+                return RedirectToAction("Details", "HouseHolds", new { id = category.HouseHoldId });
+            }
             return View(category);
         }
 
@@ -123,7 +127,8 @@ namespace FinancialPortalProject.Controllers
             return RedirectToAction("Edit", "Categories", new { id = category.Id});
         }
 
-        // GET: Categories/Delete/5
+        // POST: Categories/Delete/5
+        [HttpPost]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -132,26 +137,22 @@ namespace FinancialPortalProject.Controllers
             }
 
             var category = await _context.Categories
-                .Include(c => c.HouseHold)
+                .Include(c => c.CategoryItems)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (category == null)
             {
                 return NotFound();
             }
-
-            return View(category);
-        }
-
-        // POST: Categories/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var category = await _context.Categories.FindAsync(id);
-            _context.Categories.Remove(category);
+            category.IsDeleted = true;
+            foreach (var item in category.CategoryItems)
+            {
+                item.IsDeleted = true;
+            }
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index", "Home");
         }
+
+       
 
         private bool CategoryExists(int id)
         {

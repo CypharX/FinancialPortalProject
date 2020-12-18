@@ -3,12 +3,11 @@
 @inject FinancialPortalProject.Services.IFP_FileService FileService
 @inject UserManager<FpUser> UserManager
 @{
-    ViewData["Title"] = "Profile";
-    ViewData["ActivePage"] = ManageNavPages.Index;
-    var user = UserManager.GetUserAsync(User).Result;
+   
+    var user = await UserManager.GetUserAsync(User);
 }
 
-<h4>@ViewData["Title"]</h4>
+<h4>@user.FullName</h4>
 <partial name="_StatusMessage" model="Model.StatusMessage" />
 <div class="row">
     <div class="col-md-6">

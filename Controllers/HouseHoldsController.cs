@@ -173,7 +173,7 @@ namespace FinancialPortalProject.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user.HouseHoldId == null)
             {
-                TempData["Warning"] = "You must be in a household to view data";
+                TempData["Alert"] = "You must be in a household to view data";
                 return RedirectToAction("Index", "Home");
             }
             var household = await _context.HouseHolds.FindAsync(user.HouseHoldId);

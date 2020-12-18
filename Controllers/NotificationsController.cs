@@ -34,7 +34,7 @@ namespace FinancialPortalProject.Controllers
             var user = await _userManager.GetUserAsync(User);
             if(user.HouseHoldId == null)
             {
-                TempData["Warning"] = "You must be in a household to receive notifications";
+                TempData["Alert"] = "You must be in a household to receive notifications";
                 return RedirectToAction("Index", "Home");
             }
             if(User.IsInRole(nameof(Roles.Head)))
@@ -181,7 +181,7 @@ namespace FinancialPortalProject.Controllers
             var notification = await _context.Notifications.FindAsync(id);
             _context.Notifications.Remove(notification);
             await _context.SaveChangesAsync();
-            TempData["Error"] = "Your notification has been deleted";
+            TempData["Success"] = "Your notification has been deleted";
             return RedirectToAction("Index", "Notifications");
         }
 
