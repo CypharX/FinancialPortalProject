@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FinancialPortalProject.Enums;
 using FinancialPortalProject.Extensions;
 using FinancialPortalProject.Models;
 using FinancialPortalProject.Services;
@@ -108,6 +109,11 @@ namespace FinancialPortalProject.Areas.Identity.Pages.Account.Manage
 
         public async Task<IActionResult> OnPostAsync()
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
             {

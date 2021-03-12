@@ -69,6 +69,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("HouseHoldId,Created,Expires,Accepted,EmailTo,Subject,Body,Code")] Invitation invitation)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             if (ModelState.IsValid)
             {
                 invitation.Code = Guid.NewGuid();
@@ -84,7 +89,7 @@ namespace FinancialPortalProject.Controllers
                 return RedirectToAction("Details", "HouseHolds", new { id = invitation.HouseHoldId});
             }
             TempData["Error"] = "Your invitation could not be sent";
-            return View(invitation);
+            return RedirectToAction("Index", "Home");
         }
 
         public async Task<IActionResult> AcceptInvitation(string email, string code)

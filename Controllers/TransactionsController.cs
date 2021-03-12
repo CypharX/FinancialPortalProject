@@ -73,6 +73,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("BankAccountId,CategoryItemId,Memo,Amount")] Transaction transaction)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var catItem = await _context.CategoryItems.Include(ci => ci.Category).FirstOrDefaultAsync(ci => ci.Id == transaction.CategoryItemId);
             if (ModelState.IsValid)
             {
@@ -191,6 +196,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var transaction = await _context.Transactions
                 .Include(t => t.BankAccount)
                 .Include(t => t.CategoryItem)

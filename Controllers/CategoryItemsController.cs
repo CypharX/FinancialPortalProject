@@ -9,6 +9,7 @@ using FinancialPortalProject.Data;
 using FinancialPortalProject.Models.Core;
 using Microsoft.AspNetCore.Identity;
 using FinancialPortalProject.Models;
+using FinancialPortalProject.Enums;
 
 namespace FinancialPortalProject.Controllers
 {
@@ -63,14 +64,19 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,CategoryId,Name,Description,TargetAmount,ActualAmount")] CategoryItem categoryItem, int householdId)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             if (ModelState.IsValid)
             {
                 _context.Add(categoryItem);
                 await _context.SaveChangesAsync();                
                 return RedirectToAction("Details", "HouseHolds", new { id = householdId});
             }
-            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Description", categoryItem.CategoryId);
-            return View(categoryItem);
+            TempData["Alert"] = "Error Creating Category Item";
+            return RedirectToAction("Index", "Home");
         }
 
         // GET: CategoryItems/Edit/5
@@ -100,6 +106,11 @@ namespace FinancialPortalProject.Controllers
             if (id != categoryItem.Id)
             {
                 return NotFound();
+            }
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
             }
 
             if (ModelState.IsValid)
@@ -148,6 +159,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var categoryItem = await _context.CategoryItems.FindAsync(id);
             categoryItem.IsDeleted = true;
             await _context.SaveChangesAsync();
@@ -163,6 +179,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetData()
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var user = await _userManager.GetUserAsync(User);
             var categoryItems = await _context.Categories
                 .Where(c => c.HouseHoldId == user.HouseHoldId && c.IsDeleted == false)

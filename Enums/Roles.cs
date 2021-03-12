@@ -9,6 +9,7 @@ namespace FinancialPortalProject.Enums
     {
         Head,
         Member,
-        Admin
+        Admin,
+        Demo
     }
 }

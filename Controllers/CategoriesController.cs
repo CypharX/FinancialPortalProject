@@ -62,13 +62,18 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,HouseHoldId,Name,Description")] Category category)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             if (ModelState.IsValid)
             {
                 _context.Add(category);
                 await _context.SaveChangesAsync();
                 return RedirectToAction("Details", "HouseHolds", new { id = category.HouseHoldId});
             }
-            TempData["Error"] = "Error creating your category";
+            TempData["Error"] = "Sorry there was an error creating your category";
             return RedirectToAction("Index", "Home");
         }
 
@@ -99,6 +104,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,HouseHoldId,Name,Description")] Category category)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             if (id != category.Id)
             {
                 return NotFound();
@@ -131,6 +141,11 @@ namespace FinancialPortalProject.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete(int? id)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             if (id == null)
             {
                 return NotFound();

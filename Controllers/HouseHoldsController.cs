@@ -42,10 +42,11 @@ namespace FinancialPortalProject.Controllers
             {
                 return NotFound();
             }
+            var currentUser = await _userManager.GetUserAsync(User);
             var vm = new HouseHoldsDetailsVM();
             vm.Household = await _context.HouseHolds
                  .Include(hh => hh.Members)
-                 .FirstOrDefaultAsync(hh => hh.Id == id);
+                 .FirstOrDefaultAsync(hh => hh.Id == currentUser.HouseHoldId);
             if (vm.Household == null)
             {
                 return NotFound();
@@ -76,8 +77,7 @@ namespace FinancialPortalProject.Controllers
                 }
             }
             var itemCategories = vm.Categories.Where(c => c.CategoryItems.Count() > 0);
-            var bankAccounts = await _context.BankAccounts.Where(ba => ba.HouseHoldId == vm.Household.Id && ba.IsDeleted == false).ToListAsync();
-            ViewData["BankAccounts"] = new SelectList(bankAccounts, "Id", "Name");
+            ViewData["BankAccounts"] = new SelectList(vm.BankAccounts, "Id", "Name");
             ViewData["AllCategories"] = new SelectList(vm.Categories, "Id", "Name");
             ViewData["NonHeads"] = new SelectList(nonHeads, "Id", "FullName");
             ViewData["Categories"] = new SelectList(itemCategories, "Id", "Name");
@@ -124,6 +124,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Name,Greeting")] HouseHold houseHold)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             if (ModelState.IsValid)
             {
                 houseHold.Established = DateTime.Now;
@@ -164,7 +169,8 @@ namespace FinancialPortalProject.Controllers
 
                 return RedirectToAction("Details", "HouseHolds", new { id = houseHold.Id });
             }
-            return View(houseHold);
+            TempData["Alert"] = "Error Creating Household";
+            return RedirectToAction("Index", "Home");
         }
 
         // GET: HouseHolds/Edit/5
@@ -187,6 +193,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Greeting,Established")] HouseHold houseHold)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             if (id != houseHold.Id)
             {
                 return NotFound();
@@ -238,6 +249,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var houseHold = await _context.HouseHolds.FindAsync(id);
             _context.HouseHolds.Remove(houseHold);
             await _context.SaveChangesAsync();
@@ -253,6 +269,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> LeaveHousehold()
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var user = await _userManager.GetUserAsync(User);
             var household = await _context.HouseHolds
                 .Include(hh => hh.Members)
@@ -295,6 +316,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveMember(string memberId)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var member = await _context.Users.FindAsync(memberId);
             member.HouseHoldId = null;
             await _userManager.RemoveFromRoleAsync(member, nameof(Roles.Member));
@@ -312,6 +338,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PromoteMember(string memberId, bool stepDown)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var memeber = await _context.Users.FindAsync(memberId);
             await _userManager.RemoveFromRoleAsync(memeber, nameof(Roles.Member));
             await _userManager.AddToRoleAsync(memeber, nameof(Roles.Head));
@@ -331,6 +362,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> StepDown()
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var user = await _userManager.GetUserAsync(User);
             var heads = new List<FpUser>();
             foreach (var member in _context.Users.Where(u => u.HouseHoldId == user.HouseHoldId).ToList())

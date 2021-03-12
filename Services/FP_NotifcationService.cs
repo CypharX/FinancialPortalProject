@@ -32,6 +32,7 @@ namespace FinancialPortalProject.Services
             var notification = new Notification();
             //var formattedTransaction = String.Format("{0:C}", transaction.Amount);
             //var formattedBalance = String.Format("{0:C}", account.CurrentBalance);
+           
             if (account.CurrentBalance < 0 && account.CurrentBalance + transaction.Amount > 0)
             {
                

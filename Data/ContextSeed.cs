@@ -24,20 +24,22 @@ namespace FinancialPortalProject.Data
         {
             await SeedRolesAsync(roleManager);
             await SeedDefaultAdminAsync(userManager, configuration, fileService);
+            await SeedDemoUserAsync(userManager);
         }
 
         private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager)
         {
             await roleManager.CreateAsync(new IdentityRole(Roles.Admin.ToString()));
             await roleManager.CreateAsync(new IdentityRole(Roles.Head.ToString()));
-            await roleManager.CreateAsync(new IdentityRole(Roles.Member.ToString()));           
+            await roleManager.CreateAsync(new IdentityRole(Roles.Member.ToString()));
+            await roleManager.CreateAsync(new IdentityRole(Roles.Demo.ToString()));
         }
 
         private static async Task SeedDefaultAdminAsync(UserManager<FpUser> userManager, IConfiguration configuration, IFP_FileService fileService)
         {
             try
             {
-                var user = userManager.FindByEmailAsync(configuration.GetSection("AdminSettings")["Email"]).Result;
+                var user = await userManager.FindByEmailAsync(configuration.GetSection("AdminSettings")["Email"]);
                 if (user == null)
                 {
                     var defaultAdmin = new FpUser
@@ -45,9 +47,7 @@ namespace FinancialPortalProject.Data
                         FirstName = configuration.GetSection("AdminSettings")["FirstName"],
                         LastName = configuration.GetSection("AdminSettings")["LastName"],
                         Email = configuration.GetSection("AdminSettings")["Email"],
-                        UserName = configuration.GetSection("AdminSettings")["Email"],
-                        ImageName = configuration.GetSection("AdminSettings")["ImageName"],
-                        ImageData = await fileService.AssignDefaultAvatarAsync(configuration.GetSection("AdminSettings")["ImageName"]),
+                        UserName = configuration.GetSection("AdminSettings")["Email"],                       
                         EmailConfirmed = true
                     };
                     await userManager.CreateAsync(defaultAdmin, configuration.GetSection("AdminSettings")["Password"]);
@@ -63,6 +63,38 @@ namespace FinancialPortalProject.Data
                 throw;
             }
           
+        }
+
+        private static async Task SeedDemoUserAsync(UserManager<FpUser> userManager)
+        {
+            try
+            {
+                var email = "demo@mailinator.com";
+                var user = await userManager.FindByEmailAsync(email);
+                if (user == null)
+                {
+                    var demoUser = new FpUser
+                    {
+                        FirstName = "Daniel",
+                        LastName = "Ryder",
+                        Email = email,
+                        UserName = email,                      
+                        EmailConfirmed = true
+                    };
+                    await userManager.CreateAsync(demoUser, "Abc&123");
+                    await userManager.AddToRoleAsync(demoUser, Roles.Demo.ToString());
+                    await userManager.AddToRoleAsync(demoUser, Roles.Head.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("************** ERROR **************");
+                Debug.WriteLine("Error Seeding Demo User.");
+                Debug.WriteLine(ex.Message);
+                Debug.WriteLine("***********************************");
+                throw;
+            }
+
         }
     }
 }

@@ -92,6 +92,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,HouseHoldId,Created,Subject,Body,IsRead")] Notification notification)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             if (ModelState.IsValid)
             {
                 _context.Add(notification);
@@ -178,6 +183,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Notifications");
+            }
             var notification = await _context.Notifications.FindAsync(id);
             _context.Notifications.Remove(notification);
             await _context.SaveChangesAsync();
@@ -189,6 +199,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkRead(int id)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Notifications");
+            }
             var notification = await _context.Notifications.FindAsync(id);
             notification.IsRead = true;
             await _context.SaveChangesAsync();
@@ -199,6 +214,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkUnread(int id)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Notifications");
+            }
             var notification = await _context.Notifications.FindAsync(id);
             notification.IsRead = false;
             await _context.SaveChangesAsync();
@@ -214,6 +234,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAllRead()
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var user = await _userManager.GetUserAsync(User);
             var notifications = new List<Notification>();
             if(User.IsInRole(nameof(Roles.Head)))

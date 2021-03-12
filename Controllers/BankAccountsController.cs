@@ -36,6 +36,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("HouseHoldId,Name,AccountType,StartingBalance,LowBalance")] BankAccount bankAccount)
         {
+            if(User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             if (ModelState.IsValid)
             {
                 bankAccount.OwnerId = _userManager.GetUserId(User);
@@ -144,7 +149,12 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> SoftDelete(int? id)
         {
-            if(id == null)
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
+            if (id == null)
             {
                 return NotFound();
             }
@@ -158,6 +168,11 @@ namespace FinancialPortalProject.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TransferFunds(int sendingAccountId, int receivingAccountId, decimal amount)
         {
+            if (User.IsInRole(nameof(Roles.Demo)))
+            {
+                TempData["Alert"] = "That action can not be done by demo users";
+                return RedirectToAction("Index", "Home");
+            }
             var sendingAccount = await _context.BankAccounts.FindAsync(sendingAccountId);
             var receivingAccount = await _context.BankAccounts.FindAsync(receivingAccountId);
             sendingAccount.CurrentBalance -= amount;

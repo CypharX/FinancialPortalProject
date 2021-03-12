@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using FinancialPortalProject.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
+using FinancialPortalProject.Enums;
 
 namespace FinancialPortalProject.Controllers
 {
@@ -15,11 +16,13 @@ namespace FinancialPortalProject.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly UserManager<FpUser> _userManager;
+        private readonly SignInManager<FpUser> _signInManager;
 
-        public HomeController(ILogger<HomeController> logger, UserManager<FpUser> userManager)
+        public HomeController(ILogger<HomeController> logger, UserManager<FpUser> userManager, SignInManager<FpUser> signInManager)
         {
             _logger = logger;
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         public async Task<IActionResult> Index()
@@ -42,7 +45,15 @@ namespace FinancialPortalProject.Controllers
             return View();
         }
 
-       
+        [HttpPost]
+        public async Task<IActionResult> DemoLogin()
+        {
+            var users = await _userManager.GetUsersInRoleAsync(nameof(Roles.Demo));
+            var user = users.FirstOrDefault();
+            await _signInManager.RefreshSignInAsync(user);
+            return RedirectToAction("Index", "Home");
+        }
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
